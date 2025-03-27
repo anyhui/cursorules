@@ -2,7 +2,21 @@
   "name": "directories",
   "private": true,
   "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "prepare": "husky install",
+    "lint": "biome check .",
+    "format": "biome format . --write",
+    "test": "pnpm -r test"
+  },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.4"
+    "@biomejs/biome": "^1.9.4",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "biome check",
+      "biome format --write"
+    ]
   }
 }

@@ -1,3 +1,129 @@
+# Directories Monorepo
+
+这是一个基于 TypeScript 的 Monorepo 项目，包含多个应用和共享包。
+
+## 项目结构
+
+```
+directories/
+├── apps/
+│   ├── windsurf/    # Windsurf 应用
+│   └── cursor/      # Cursor 应用
+├── packages/
+│   ├── kv/          # 键值存储包
+│   └── data/        # 数据处理包
+└── scripts/         # 项目脚本
+```
+
+## 技术栈
+
+- 语言：TypeScript
+- 框架：Next.js
+- 样式：Tailwind CSS
+- 组件：Radix UI
+- 代码质量：Biome
+- 包管理：pnpm
+- 数据库：Supabase
+- 缓存：Upstash Redis
+
+## 开始使用
+
+### 前置要求
+
+- Node.js >= 18
+- pnpm >= 8.0.0
+
+### 安装
+
+```bash
+# 安装 pnpm（如果未安装）
+corepack enable
+corepack prepare pnpm@latest --activate
+
+# 安装依赖
+pnpm install
+```
+
+### 开发
+
+```bash
+# 启动所有应用
+pnpm dev
+
+# 启动特定应用
+pnpm --filter @directories/windsurf dev
+pnpm --filter @directories/cursor dev
+```
+
+### 构建
+
+```bash
+# 构建所有项目
+pnpm build
+
+# 构建特定项目
+pnpm --filter @directories/windsurf build
+```
+
+## 开发规范
+
+### 代码风格
+
+- 使用 Biome 进行代码格式化和 lint
+- 遵循 TypeScript 严格模式
+- 使用函数式编程范式
+- 保持代码简洁和可测试性
+
+### Git 提交规范
+
+提交信息格式：
+```
+<type>(<scope>): <subject>
+
+<body>
+```
+
+类型（type）：
+- feat: 新功能
+- fix: 修复
+- docs: 文档
+- style: 格式
+- refactor: 重构
+- test: 测试
+- chore: 构建过程或辅助工具的变动
+
+### 分支管理
+
+- main: 主分支，保护分支
+- develop: 开发分支
+- feature/*: 功能分支
+- bugfix/*: 修复分支
+- release/*: 发布分支
+
+## 贡献指南
+
+1. Fork 项目
+2. 创建功能分支
+3. 提交更改
+4. 推送到分支
+5. 创建 Pull Request
+
+### Pull Request 规范
+
+- 标题清晰描述变更
+- 详细描述变更内容
+- 确保所有测试通过
+- 确保代码符合规范
+- 更新相关文档
+
+## 许可证
+
+MIT
+
+## 维护者
+
+[维护者信息]
+
 ![hero](image.png)
 
 # How to Contribute to Directories
