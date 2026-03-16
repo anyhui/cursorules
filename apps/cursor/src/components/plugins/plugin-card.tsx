@@ -10,48 +10,61 @@ export type PluginCardData = {
   logo?: string | null;
   type: "rules" | "mcp" | "both";
   rulesCount?: number;
+  mcpCount?: number;
   keywords?: string[];
+  starCount?: number;
   href: string;
 };
 
 const isSvgLogo = (url: string) => url.endsWith(".svg");
 
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(n);
+}
+
 export function PluginCard({ plugin }: { plugin: PluginCardData }) {
   return (
     <Link href={plugin.href}>
-      <Card className="bg-transparent h-[140px] hover:bg-accent transition-colors">
+      <Card className="h-[156px] overflow-hidden border-border bg-transparent transition-colors hover:border-input hover:bg-transparent">
         <CardContent className="flex flex-col gap-3 p-4 h-full">
           <div className="flex items-center gap-3">
-            <Avatar className="size-8 rounded-none flex-shrink-0">
+            <Avatar className="size-9 rounded-[4px] flex-shrink-0 border border-border bg-muted">
               {plugin.logo ? (
                 <AvatarImage
                   src={plugin.logo}
                   alt={plugin.name}
-                  className={cn(isSvgLogo(plugin.logo) && "invert")}
+                  className={cn("object-cover", isSvgLogo(plugin.logo) && "invert")}
                 />
               ) : (
-                <AvatarFallback className="bg-[#1c1c1c] rounded-none text-xs">
+                <AvatarFallback className="rounded-[4px] bg-muted text-xs text-foreground">
                   {plugin.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               )}
             </Avatar>
-            <h3 className="text-sm font-medium truncate">{plugin.name}</h3>
+            <h3 className="truncate text-sm font-medium tracking-[0.005em] text-foreground">{plugin.name}</h3>
           </div>
 
-          <p className="text-[#878787] text-xs line-clamp-2 font-mono flex-1">
+          <p className="flex-1 line-clamp-2 text-[13px] leading-5 text-muted-foreground">
             {plugin.description}
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="mt-auto flex items-center gap-2">
             {plugin.type === "mcp" || plugin.type === "both" ? (
-              <span className="text-[10px] font-mono text-[#878787] border border-border px-1.5 py-0.5">
+              <span className="rounded-[4px] border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
                 MCP
               </span>
             ) : null}
             {(plugin.type === "rules" || plugin.type === "both") &&
             plugin.rulesCount ? (
-              <span className="text-[10px] font-mono text-[#878787] border border-border px-1.5 py-0.5">
+              <span className="rounded-[4px] border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
                 {plugin.rulesCount} {plugin.rulesCount === 1 ? "rule" : "rules"}
+              </span>
+            ) : null}
+            {plugin.starCount ? (
+              <span className="ml-auto rounded-[4px] border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+                {formatCount(plugin.starCount)} {plugin.starCount === 1 ? "star" : "stars"}
               </span>
             ) : null}
           </div>

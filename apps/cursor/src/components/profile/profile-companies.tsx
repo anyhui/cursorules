@@ -13,8 +13,8 @@ export async function ProfileCompanies({
 
   if (!data?.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center h-full mt-12">
-        <p className="text-[#878787] mb-4 text-sm font-mono">
+      <div className="surface-card mt-6 flex h-full flex-col items-center justify-center rounded-lg py-12 text-center">
+        <p className="mb-4 text-sm text-muted-foreground">
           No companies added yet
         </p>
         {isOwner && <AddCompanyButton redirect={true} />}
@@ -23,7 +23,7 @@ export async function ProfileCompanies({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3 pt-2">
       {data?.map((company) => (
         <CompanyCard key={company.id} company={company} />
       ))}

@@ -24,9 +24,12 @@ export async function getUserProfile(slug: string, userId?: string) {
     };
   }
 
+  const isOwner = userId && data.id === userId;
+
   return {
     data: {
       ...data,
+      follow_email: isOwner ? data.follow_email : undefined,
       following_count: data?.following_count || 0,
       followers_count: data?.follower_count || 0,
       posts: data?.posts
@@ -79,7 +82,12 @@ export async function getPopularPosts() {
 
 export async function getCompanyProfile(slug: string, userId?: string) {
   const supabase = await createClient();
-  const query = supabase.from("companies").select("*").eq("slug", slug);
+  const query = supabase
+    .from("companies")
+    .select(
+      "id, name, slug, image, location, bio, website, social_x_link, hero, public, owner_id, created_at",
+    )
+    .eq("slug", slug);
 
   if (userId) {
     query.eq("owner_id", userId);
@@ -94,24 +102,48 @@ export async function getUserCompanies(userId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("companies")
-    .select("*")
+    .select("id, name, slug, image, location, bio, website, social_x_link, hero, public, owner_id, created_at")
     .eq("owner_id", userId);
 
   return { data, error };
 }
 
-export async function getCompanies() {
+export async function getUserPlugins(userId: string) {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("companies")
-    .select("*")
+    .from("plugins")
+    .select("*, plugin_components(*)")
+    .eq("owner_id", userId)
+    .eq("active", true)
+    .order("star_count", { ascending: false })
     .order("created_at", { ascending: false });
 
-  return {
-    data,
-    error,
-  };
+  return { data: data as PluginRow[] | null, error };
 }
+
+export async function getCompanies() {
+  const supabase = await createClient();
+  const all: any[] = [];
+  const PAGE_SIZE = 1000;
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("companies")
+      .select("id, name, slug, image, location")
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) return { data: all, error };
+    if (!data || data.length === 0) break;
+    all.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+
+  return { data: all, error: null };
+}
+
 
 export async function getFeaturedJobs({
   onlyPremium,
@@ -286,6 +318,139 @@ export async function getMCPBySlug(slug: string) {
   return { data, error };
 }
 
+// ---------------------------------------------------------------------------
+// Plugins (Open Plugins spec)
+// ---------------------------------------------------------------------------
+
+export type PluginComponent = {
+  id: string;
+  plugin_id: string;
+  type: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  content: string | null;
+  metadata: Record<string, unknown>;
+  sort_order: number;
+  created_at: string;
+};
+
+export type PluginRow = {
+  id: string;
+  name: string;
+  slug: string;
+  version: string;
+  description: string | null;
+  homepage: string | null;
+  repository: string | null;
+  license: string | null;
+  logo: string | null;
+  keywords: string[];
+  author_name: string | null;
+  author_url: string | null;
+  author_avatar: string | null;
+  owner_id: string | null;
+  active: boolean;
+  plan: string;
+  order: number;
+  install_count: number;
+  star_count: number;
+  created_at: string;
+  updated_at: string;
+  plugin_components?: PluginComponent[];
+};
+
+export async function getPlugins({
+  page = 1,
+  limit = 36,
+  fetchAll = false,
+}: {
+  page?: number;
+  limit?: number;
+  fetchAll?: boolean;
+} = {}): Promise<{ data: PluginRow[] | null; error: any }> {
+  const supabase = await createClient();
+
+  if (fetchAll) {
+    const PAGE_SIZE = 100;
+    let allData: PluginRow[] = [];
+    let from = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from("plugins")
+        .select("*, plugin_components(*)")
+        .eq("active", true)
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) return { data: null, error };
+      if (!data || data.length === 0) break;
+
+      allData = allData.concat(data as PluginRow[]);
+      hasMore = data.length === PAGE_SIZE;
+      from += PAGE_SIZE;
+    }
+
+    return { data: allData, error: null };
+  }
+
+  const { data, error } = await supabase
+    .from("plugins")
+    .select("*, plugin_components(*)")
+    .eq("active", true)
+    .order("created_at", { ascending: false })
+    .limit(limit)
+    .range((page - 1) * limit, page * limit - 1);
+
+  return { data: data as PluginRow[] | null, error };
+}
+
+export async function getPluginBySlug(slug: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("plugins")
+    .select("*, plugin_components(*)")
+    .eq("slug", slug)
+    .single();
+
+  return { data: data as PluginRow | null, error };
+}
+
+export async function getFeaturedPlugins({
+  onlyPremium,
+}: {
+  onlyPremium?: boolean;
+} = {}) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("plugins")
+    .select("*, plugin_components(*)")
+    .limit(100)
+    .order("order", { ascending: false })
+    .order("star_count", { ascending: false })
+    .eq("active", true)
+    .or(onlyPremium ? "plan.eq.premium" : "plan.eq.featured,plan.eq.premium");
+
+  return {
+    data: (data as PluginRow[] | null)?.sort(() => Math.random() - 0.5) ?? null,
+    error,
+  };
+}
+
+export async function hasUserStarredPlugin(pluginId: string, userId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("plugin_stars")
+    .select("plugin_id")
+    .eq("plugin_id", pluginId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  return !!data;
+}
+
 type GetMembersParams = {
   page?: number;
   limit?: number;
@@ -300,7 +465,7 @@ export async function getMembers({
   const supabase = await createClient();
   const query = supabase
     .from("users")
-    .select("*")
+    .select("id, name, image, slug, follower_count")
     .eq("public", true)
     .order("created_at", { ascending: false })
     .limit(limit)

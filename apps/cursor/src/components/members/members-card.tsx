@@ -2,6 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { formatNumber } from "@/utils/format";
 import Link from "next/link";
 
 export function MembersCard({
@@ -13,6 +14,7 @@ export function MembersCard({
     slug: string;
     image: string;
     name: string;
+    follower_count?: number;
   };
   gray?: boolean;
   noBorder?: boolean;
@@ -21,28 +23,39 @@ export function MembersCard({
     <Link
       href={`/u/${member.slug}`}
       className={cn(
-        "flex border border-border p-2 items-center gap-2 group",
-        noBorder && "border-none",
+        "group flex items-center gap-3 rounded-md border border-border bg-transparent p-3 transition-colors hover:border-input hover:bg-transparent",
+        noBorder &&
+          "border-transparent bg-transparent px-0 py-2 hover:border-transparent hover:bg-transparent",
       )}
     >
-      <Avatar className="rounded-none">
+      <Avatar className="size-10 rounded-[6px] border border-border bg-muted">
         <AvatarImage
           src={member.image}
           alt={member.name}
           className={cn(
-            "rounded-none",
+            "rounded-[6px] object-cover",
             gray
               ? "grayscale group-hover:grayscale-0 transition-all duration-300"
               : "",
           )}
         />
-        <AvatarFallback className="rounded-none">
+        <AvatarFallback className="rounded-[6px] bg-muted text-sm text-foreground">
           {member.name.charAt(0)}
         </AvatarFallback>
       </Avatar>
-      <div className="text-xs text-[#878787] font-mono font-medium">
-        {member.name}
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-medium tracking-[0.005em] text-foreground">
+          {member.name}
+        </div>
+        <div className="truncate text-[13px] text-muted-foreground">
+          @{member.slug}
+        </div>
       </div>
+      {(member.follower_count ?? 0) > 0 && (
+        <span className="flex-shrink-0 text-xs text-muted-foreground">
+          {formatNumber(member.follower_count!)} {member.follower_count === 1 ? "follower" : "followers"}
+        </span>
+      )}
     </Link>
   );
 }

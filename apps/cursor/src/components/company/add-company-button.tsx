@@ -14,7 +14,7 @@ export function AddCompanyButton({ redirect }: { redirect?: boolean }) {
     <Button
       type="button"
       variant="outline"
-      className="border-border rounded-full"
+      size="lg"
       onClick={() => setAddCompany({ addCompany: true, redirect })}
     >
       Add company

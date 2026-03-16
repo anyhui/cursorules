@@ -1,22 +1,28 @@
-import { getPlugins } from "@directories/data/plugins";
+import { getPlugins } from "@/data/queries";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 
 type Params = Promise<{ slug: string }>;
 
 export async function generateStaticParams() {
-  const plugins = getPlugins();
+  const { data: plugins } = await getPlugins({ fetchAll: true });
+  if (!plugins) return [];
+
   return plugins.flatMap((plugin) =>
-    plugin.rules.map((rule) => ({ slug: rule.slug })),
+    (plugin.plugin_components ?? [])
+      .filter((c) => c.type === "rule")
+      .map((rule) => ({ slug: rule.slug })),
   );
 }
 
 export default async function Page({ params }: { params: Params }) {
   const { slug } = await params;
 
-  const plugins = getPlugins();
-  const parentPlugin = plugins.find((p) =>
-    p.rules.some((r) => r.slug === slug),
+  const { data: plugins } = await getPlugins({ fetchAll: true });
+  const parentPlugin = (plugins ?? []).find((p) =>
+    (p.plugin_components ?? []).some(
+      (c) => c.type === "rule" && c.slug === slug,
+    ),
   );
 
   if (parentPlugin) {

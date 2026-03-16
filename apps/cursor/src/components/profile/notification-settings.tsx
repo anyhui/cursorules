@@ -37,11 +37,13 @@ export function NotificationSettings({ data }: NotificationSettingsProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="surface-card space-y-4 rounded-lg p-5">
+      <div className="flex items-center justify-between gap-4">
         <div className="space-y-0.5">
-          <h4 className="text-sm font-mono">Follow Email Notifications</h4>
-          <p className="text-xs text-[#878787] font-mono">
+          <h4 className="text-sm font-medium tracking-[0.005em] text-foreground">
+            Follow Email Notifications
+          </h4>
+          <p className="text-sm text-muted-foreground">
             Receive email notifications when someone follows you
           </p>
         </div>

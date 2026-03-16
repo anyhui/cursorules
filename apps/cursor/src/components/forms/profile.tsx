@@ -49,27 +49,13 @@ const formSchema = z.object({
     .nullable(),
   website: z
     .string()
-    .transform((val) => (val === "" ? null : val))
-    .pipe(
-      z
-        .string()
-        .url({
-          message: "Please enter a valid website URL.",
-        })
-        .nullable(),
-    ),
+    .url({ message: "Please enter a valid website URL." })
+    .or(z.literal("")),
   social_x_link: z
     .string()
-    .transform((val) => (val === "" ? null : val))
-    .pipe(
-      z
-        .string()
-        .url({
-          message: "Please enter a valid X URL.",
-        })
-        .nullable(),
-    ),
-  is_public: z.boolean().default(true),
+    .url({ message: "Please enter a valid X URL." })
+    .or(z.literal("")),
+  is_public: z.boolean().optional(),
   slug: z.string().min(1, {
     message: "Username is required.",
   }),
@@ -111,7 +97,7 @@ export function ProfileForm({ data }: { data: ProfileData }) {
       work: data.work || null,
       website: data.website || null,
       social_x_link: data.social_x_link || null,
-      is_public: data.is_public,
+      is_public: data.is_public ?? true,
       slug: data.slug,
     });
   };
@@ -275,7 +261,7 @@ export function ProfileForm({ data }: { data: ProfileData }) {
           </div>
         </ScrollArea>
 
-        <Button type="submit" className="w-full" disabled={isExecuting}>
+        <Button type="submit" size="lg" className="w-full" disabled={isExecuting}>
           {isExecuting ? "Saving..." : "Save Profile"}
         </Button>
       </form>

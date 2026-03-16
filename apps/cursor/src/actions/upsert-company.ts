@@ -37,8 +37,22 @@ export const upsertCompanyAction = authActionClient
         is_public,
         redirect: shouldRedirect,
       },
+      ctx: { userId },
     }) => {
       const supabase = await createClient();
+
+      if (id) {
+        const { data: existing } = await supabase
+          .from("companies")
+          .select("id")
+          .eq("id", id)
+          .eq("owner_id", userId)
+          .single();
+
+        if (!existing) {
+          throw new Error("You don't have permission to edit this company");
+        }
+      }
 
       await supabase.from("companies").upsert(
         {
@@ -51,6 +65,7 @@ export const upsertCompanyAction = authActionClient
           website,
           social_x_link,
           public: is_public,
+          owner_id: userId,
         },
         {
           onConflict: "slug",
@@ -61,6 +76,7 @@ export const upsertCompanyAction = authActionClient
         .from("companies")
         .select("id, slug")
         .eq("id", id)
+        .eq("owner_id", userId)
         .single();
 
       if (error) {

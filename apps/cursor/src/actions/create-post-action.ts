@@ -1,6 +1,5 @@
 "use server";
 
-import { createPostRatelimit } from "@/lib/ratelimit";
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -18,14 +17,6 @@ export const createPostAction = authActionClient
     }),
   )
   .action(async ({ parsedInput: { title, content, url }, ctx: { userId } }) => {
-    const { success } = await createPostRatelimit.limit(
-      `create-post-${userId}`,
-    );
-
-    if (!success) {
-      throw new Error("Too many requests. Please try again later.");
-    }
-
     const supabase = await createClient();
 
     const { data: post } = await supabase

@@ -1,5 +1,4 @@
-import { getCompanies, getMCPs } from "@/data/queries";
-import { getPlugins } from "@directories/data/plugins";
+import { getCompanies, getPlugins } from "@/data/queries";
 import type { MetadataRoute } from "next";
 
 const BASE_URL = "https://cursor.directory";
@@ -26,24 +25,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  const filePlugins = getPlugins();
-  for (const plugin of filePlugins) {
-    routes.push({
-      url: `${BASE_URL}/plugins/${plugin.slug}`,
-      lastModified: new Date(),
-      changeFrequency: "weekly",
-      priority: 0.7,
-    });
-  }
-
-  const { data: mcpData } = await getMCPs({ fetchAll: true });
-  if (mcpData) {
-    for (const mcp of mcpData) {
+  const { data: plugins } = await getPlugins({ fetchAll: true });
+  if (plugins) {
+    for (const plugin of plugins) {
       routes.push({
-        url: `${BASE_URL}/plugins/mcp-${mcp.slug}`,
-        lastModified: new Date(),
+        url: `${BASE_URL}/plugins/${plugin.slug}`,
+        lastModified: new Date(plugin.updated_at),
         changeFrequency: "weekly",
-        priority: 0.6,
+        priority: 0.7,
       });
     }
   }

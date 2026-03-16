@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ProfileCompanies } from "./profile-companies";
 import { ProfileContent } from "./profile-content";
 
+import { ProfilePlugins } from "./profile-plugins";
 import { ProfilePosts } from "./profile-posts";
 import { ProfileTop } from "./profile-top";
 
@@ -43,25 +44,28 @@ export async function Profile({
         social_x_link={data?.social_x_link}
       />
 
-      <Tabs defaultValue="posts" className="w-full mt-14">
-        <TabsList className="w-full justify-start border-b rounded-none h-12 bg-transparent p-0 gap-2">
-          <TabsTrigger
-            value="posts"
-            className="rounded-none h-full data-[state=active]:border-b-2 data-[state=active]:border-primary px-0"
-          >
+      <Tabs defaultValue="posts" className="mt-12 w-full">
+        <TabsList className="justify-start gap-1">
+          <TabsTrigger value="posts" className="min-w-[96px]">
             Posts
           </TabsTrigger>
-          <TabsTrigger
-            value="companies"
-            className="rounded-none h-full data-[state=active]:border-b-2 data-[state=active]:border-primary"
-          >
+          <TabsTrigger value="plugins" className="min-w-[96px]">
+            Plugins
+          </TabsTrigger>
+          <TabsTrigger value="companies" className="min-w-[96px]">
             Companies
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="posts" className="mt-6 space-y-10 min-h-[300px]">
+        <TabsContent value="posts" className="mt-6 min-h-[300px]">
           {/* @ts-ignore */}
           <ProfilePosts data={data?.posts} isOwner={isOwner} />
+        </TabsContent>
+
+        <TabsContent value="plugins" className="mt-6 min-h-[300px]">
+          <Suspense fallback={<div>Loading...</div>}>
+            <ProfilePlugins userId={data?.id} isOwner={isOwner} />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="companies" className="mt-6 min-h-[300px]">
@@ -71,7 +75,7 @@ export async function Profile({
         </TabsContent>
       </Tabs>
 
-      <div className="text-sm text-[#878787] flex justify-between items-center border-t border-border pt-6 mt-10">
+      <div className="mt-10 flex items-center justify-between border-t border-border pt-6 text-sm text-muted-foreground">
         <span>Joined Cursor Directory</span>
         {format(new Date(data?.created_at), "MMM d, yyyy")}
       </div>

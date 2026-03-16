@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useQueryState } from "nuqs";
-import { Input } from "./ui/input";
+import { SearchField } from "./ui/search-field";
 
 export function SearchInput({
   placeholder,
@@ -19,14 +19,11 @@ export function SearchInput({
   });
 
   return (
-    <Input
+    <SearchField
       placeholder={placeholder}
       value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className={cn(
-        "w-full border-border placeholder:text-[#565656] outline-none focus:!ring-0",
-        className,
-      )}
+      onChange={setSearch}
+      className={cn("w-full", className)}
     />
   );
 }

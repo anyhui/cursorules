@@ -1,9 +1,10 @@
 "use client";
 
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import { cn } from "@/lib/utils";
 import Fuse from "fuse.js";
 import { useQueryState } from "nuqs";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { SearchInput } from "../search-input";
 import { Button } from "../ui/button";
 import { type PluginCardData, PluginCard } from "./plugin-card";
@@ -23,6 +24,7 @@ export function PluginList({
 
   const tabs = [
     { key: null, label: "All" },
+    { key: "popular", label: "Popular" },
     { key: "mcp", label: "MCPs" },
     { key: "rules", label: "Rules" },
   ] as const;
@@ -47,7 +49,11 @@ export function PluginList({
   const filtered = useMemo(() => {
     let result = plugins;
 
-    if (selectedTag === "mcp") {
+    if (selectedTag === "popular") {
+      result = [...result]
+        .filter((p) => (p.starCount ?? 0) > 0)
+        .sort((a, b) => (b.starCount ?? 0) - (a.starCount ?? 0));
+    } else if (selectedTag === "mcp") {
       result = result.filter((p) => p.type === "mcp" || p.type === "both");
     } else if (selectedTag === "rules") {
       result = result.filter((p) => p.type === "rules" || p.type === "both");
@@ -69,22 +75,33 @@ export function PluginList({
     return result;
   }, [plugins, search, selectedTag, fuse]);
 
+  const loadMore = useCallback(
+    () => setVisibleCount((prev) => Math.min(prev + ITEMS_PER_PAGE, filtered.length)),
+    [filtered.length],
+  );
+
+  const hasMore = visibleCount < filtered.length;
+  const sentinelRef = useInfiniteScroll(loadMore, hasMore);
+
   return (
     <div>
       <SearchInput
-        placeholder={`Search ${plugins.length} plugins`}
-        className="border-l-0 border-r-0 border-t-0 border-b-[1px] border-border px-0"
+        placeholder={`Search ${plugins.length} plugins by name, keyword...`}
+        className="max-w-[520px]"
       />
 
-      <div className="flex items-center gap-0 mt-6">
+      <div className="mt-6 flex items-center gap-2">
         {tabs.map((tab) => (
           <Button
             key={tab.label}
-            variant="ghost"
+            variant={
+              tab.key === null ? (!selectedTag ? "secondary" : "ghost") : selectedTag === tab.key ? "secondary" : "ghost"
+            }
             className={cn(
-              "px-4 py-0 h-8 text-[#878787] bg-[#F5F5F5] dark:text-[#878787] dark:bg-[#1D1D1D]",
-              (tab.key === null ? !selectedTag : selectedTag === tab.key) &&
-                "bg-[#E5E5E5] text-black dark:bg-[#2C2C2C] dark:text-white",
+              "h-8 rounded-full px-4",
+              (tab.key === null ? !selectedTag : selectedTag === tab.key)
+                ? "text-foreground"
+                : "text-muted-foreground",
             )}
             onClick={() => setSelectedTag(tab.key)}
           >
@@ -101,25 +118,11 @@ export function PluginList({
             ))}
           </div>
 
-          {visibleCount < filtered.length && (
-            <div className="flex justify-center mt-8">
-              <Button
-                variant="outline"
-                className="rounded-full border-border"
-                onClick={() =>
-                  setVisibleCount((prev) =>
-                    Math.min(prev + ITEMS_PER_PAGE, filtered.length),
-                  )
-                }
-              >
-                Load more
-              </Button>
-            </div>
-          )}
+          {hasMore && <div ref={sentinelRef} className="h-px" />}
         </>
       ) : (
         <div className="mt-24 flex flex-col items-center">
-          <p className="text-center text-sm text-[#878787]">
+          <p className="text-center text-sm text-muted-foreground">
             No plugins found
           </p>
           <Button

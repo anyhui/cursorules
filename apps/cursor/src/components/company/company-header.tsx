@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EditCompanyModal } from "../modals/edit-company-modal";
 
 export function CompanyHeader({
@@ -25,22 +25,29 @@ export function CompanyHeader({
   slug: string;
 }) {
   return (
-    <div className="flex items-center gap-4">
-      <Avatar className="size-24 border-border border flex items-center justify-center">
-        <AvatarImage src={image ?? undefined} />
-
-        <AvatarFallback className="text-sm font-mono">
+    <div className="relative z-10 mt-4 flex flex-col gap-4 pb-2 md:mt-5 md:flex-row md:items-center md:gap-6">
+      <Avatar className="size-20 border border-border bg-card md:size-24">
+        <AvatarImage src={image ?? undefined} className="object-cover" />
+        <AvatarFallback className="bg-muted text-lg font-medium text-foreground">
           {name?.charAt(0)}
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex flex-col">
-        <h2 className="text-xl font-mono">{name}</h2>
-        <span className="text-sm font-mono text-[#878787]">{location}</span>
+      <div className="flex min-w-0 flex-1 flex-col gap-2 md:pb-1">
+        <div className="space-y-1">
+          <h2 className="text-[26px] font-medium leading-[1.05] tracking-[-0.03em] text-foreground md:text-[34px]">
+            {name}
+          </h2>
+          {location && (
+            <span className="block text-sm text-muted-foreground">
+              {location}
+            </span>
+          )}
+        </div>
       </div>
 
       {isOwner && (
-        <div className="ml-auto">
+        <div className="self-start md:ml-auto md:self-center">
           <EditCompanyModal
             data={{
               id,

@@ -2,130 +2,108 @@ import type { PluginCardData } from "@/components/plugins/plugin-card";
 import { Startpage } from "@/components/startpage";
 import {
   getFeaturedJobs,
-  getFeaturedMCPs,
-  getMCPs,
+  getFeaturedPlugins,
   getMembers,
+  getPlugins,
   getPopularPosts,
-  getRecentMCPs,
   getTotalUsers,
 } from "@/data/queries";
-import { getPlugins } from "@directories/data/plugins";
+import { getEvents } from "@/lib/luma";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
 export const metadata: Metadata = {
-  title: "Cursor Directory - Plugins, Rules & MCP Servers",
+  title: "Cursor Directory - Explore What the Community Is Building",
   description:
-    "Enhance your Cursor with plugins, custom rules, MCP servers, and join a community of Cursor enthusiasts.",
+    "Plugins, MCP servers, events, and thousands of developers building with Cursor.",
 };
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
 
+function getPluginType(components: { type: string }[]): "rules" | "mcp" | "both" {
+  const hasRules = components.some((c) => c.type === "rule");
+  const hasMcp = components.some((c) => c.type === "mcp_server");
+  if (hasRules && hasMcp) return "both";
+  if (hasMcp) return "mcp";
+  return "rules";
+}
+
+function toPluginCard(p: NonNullable<Awaited<ReturnType<typeof getPlugins>>["data"]>[number]): PluginCardData {
+  const components = p.plugin_components ?? [];
+  return {
+    name: p.name,
+    slug: p.slug,
+    description: p.description ?? "",
+    logo: p.logo,
+    type: getPluginType(components),
+    rulesCount: components.filter((c) => c.type === "rule").length,
+    mcpCount: components.filter((c) => c.type === "mcp_server").length,
+    keywords: p.keywords,
+    starCount: p.star_count,
+    href: `/plugins/${p.slug}`,
+  };
+}
+
 export default async function Page() {
-  const { data: featuredJobs } = await getFeaturedJobs({
-    onlyPremium: true,
-  });
+  const [
+    { data: featuredJobs },
+    { data: featuredPluginsData },
+    { data: totalUsers },
+    { data: members },
+    { data: popularPosts },
+    { data: allPluginsData },
+    { entries: eventsData },
+  ] = await Promise.all([
+    getFeaturedJobs({ onlyPremium: true }),
+    getFeaturedPlugins({ onlyPremium: true }),
+    getTotalUsers(),
+    getMembers({ page: 1, limit: 12 }),
+    getPopularPosts(),
+    getPlugins({ fetchAll: true }),
+    getEvents(),
+  ]);
 
-  const { data: featuredMCPs } = await getFeaturedMCPs({
-    onlyPremium: true,
-  });
+  const featuredPlugins = (featuredPluginsData ?? []).slice(0, 8).map(toPluginCard);
 
-  const { data: totalUsers } = await getTotalUsers();
-
-  const { data: members } = await getMembers({
-    page: 1,
-    limit: 12,
-  });
-
-  const { data: popularPosts } = await getPopularPosts();
-
-  const filePlugins = getPlugins();
-  const topRulePlugins: PluginCardData[] = filePlugins
-    .filter((p) => p.rules.length > 0)
-    .slice(0, 4)
-    .map((p) => ({
-      name: p.name,
-      slug: p.slug,
-      description: p.description,
-      logo: p.logo,
-      type: "rules" as const,
-      rulesCount: p.rules.length,
-      href: `/plugins/${p.slug}`,
-    }));
-
-  const topMCPPlugins: PluginCardData[] = (featuredMCPs ?? [])
-    .slice(0, 4)
-    .map((mcp) => ({
-      name: mcp.name,
-      slug: `mcp-${mcp.slug}`,
-      description: mcp.description,
-      logo: mcp.logo,
-      type: "mcp" as const,
-      href: `/plugins/mcp-${mcp.slug}`,
-    }));
-
-  const featuredPlugins = [...topMCPPlugins, ...topRulePlugins];
-
-  const { data: allMCPs } = await getMCPs({ fetchAll: true });
-
-  const allRulePlugins: PluginCardData[] = filePlugins
-    .filter((p) => p.rules.length > 0)
-    .map((p) => ({
-      name: p.name,
-      slug: p.slug,
-      description: p.description,
-      logo: p.logo,
-      type: "rules" as const,
-      rulesCount: p.rules.length,
-      keywords: p.keywords,
-      href: `/plugins/${p.slug}`,
-    }));
-
-  const allMCPPlugins: PluginCardData[] = (allMCPs ?? []).map((mcp) => ({
-    name: mcp.name,
-    slug: `mcp-${mcp.slug}`,
-    description: mcp.description,
-    logo: mcp.logo,
-    type: "mcp" as const,
-    href: `/plugins/mcp-${mcp.slug}`,
-  }));
-
-  const seen = new Set<string>();
-  const allPlugins = [...allRulePlugins, ...allMCPPlugins]
-    .filter((p) => {
-      if (seen.has(p.slug)) return false;
-      seen.add(p.slug);
-      return true;
-    })
+  const allPlugins = (allPluginsData ?? [])
+    .map(toPluginCard)
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const { data: recentMCPData } = await getRecentMCPs({ limit: 8 });
-  const recentMCPPlugins: PluginCardData[] = (recentMCPData ?? []).map(
-    (mcp) => ({
-      name: mcp.name,
-      slug: `mcp-${mcp.slug}`,
-      description: mcp.description,
-      logo: mcp.logo,
-      type: "mcp" as const,
-      href: `/plugins/mcp-${mcp.slug}`,
-    }),
-  );
+  const popularPlugins = (allPluginsData ?? [])
+    .filter((p) => p.star_count > 0)
+    .sort((a, b) => b.star_count - a.star_count)
+    .slice(0, 8)
+    .map(toPluginCard);
 
-  const shuffledRulePlugins = [...allRulePlugins]
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 8);
+  const recentPlugins = (allPluginsData ?? [])
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 16)
+    .map(toPluginCard);
 
-  const recentPlugins = [...recentMCPPlugins, ...shuffledRulePlugins];
+  const now = new Date();
+  const upcomingEvents = (eventsData ?? [])
+    .filter(
+      (e) =>
+        e.event.visibility === "public" && new Date(e.event.end_at) >= now,
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.event.start_at).getTime() -
+        new Date(b.event.start_at).getTime(),
+    )
+    .slice(0, 4);
 
   return (
-    <div className="flex justify-center min-h-screen w-full md:px-0 px-6 mt-[10%]">
-      <div className="w-full max-w-6xl">
+    <div className="min-h-screen w-full">
+      <div className="w-full">
         <Suspense>
           <Startpage
             featuredPlugins={featuredPlugins}
+            popularPlugins={popularPlugins}
             allPlugins={allPlugins}
             recentPlugins={recentPlugins}
+            upcomingEvents={upcomingEvents}
             jobs={featuredJobs}
             totalUsers={totalUsers?.count ?? 0}
             members={members}

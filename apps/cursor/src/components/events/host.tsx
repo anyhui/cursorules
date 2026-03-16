@@ -1,47 +1,43 @@
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export function Host() {
   return (
-    <div className="relative min-h-[250px] md:min-h-[340px] md:max-w-[350px] flex bg-black p-4 sm:p-6">
-      <div
-        className="absolute inset-0 border border-border"
-        style={{
-          backgroundImage: `repeating-linear-gradient(
-            -60deg,
-            transparent,
-            transparent 1px,
-            #2C2C2C 1px,
-            #2C2C2C 2px,
-            transparent 2px,
-            transparent 6px
-          )`,
-        }}
-      />
+    <div
+      className="relative overflow-hidden rounded-xl border border-border p-6 md:p-8"
+      style={{
+        backgroundImage: `repeating-linear-gradient(
+          -60deg,
+          transparent,
+          transparent 1px,
+          color-mix(in oklab, var(--base) 16%, transparent) 1px,
+          color-mix(in oklab, var(--base) 16%, transparent) 2px,
+          transparent 2px,
+          transparent 6px
+        )`,
+      }}
+    >
+      <h2 className="text-xl font-medium tracking-tight md:text-2xl">
+        Host a Cursor Community event
+      </h2>
 
-      <div className="relative z-10 text-white">
-        <h1 className="text-3xl sm:text-4xl tracking-tight">
-          Host a Cursor Community event
-        </h1>
+      <p className="mt-3 max-w-lg text-sm leading-6 text-muted-foreground">
+        Interested in getting support from the team to host Cursor community
+        meetups, hackathons, or workshops?
+      </p>
 
-        <p className="text-sm text-[#878787] mt-4">
-          If you’re interested in getting support from the team to host Cursor
-          community meetups, hackathons, workshops
-        </p>
-
-        <Link
+      <Button
+        variant="outline"
+        className="mt-6 border-border"
+        asChild
+      >
+        <a
           href="https://anysphere.typeform.com/to/aqRbfe1R"
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Button
-            className="font-mono mt-12 text-sm h-9 rounded-full border-white bg-transparent hover:bg-white hover:text-black transition-colors"
-            variant="outline"
-          >
-            Fill this out
-          </Button>
-        </Link>
-      </div>
+          Apply to host
+        </a>
+      </Button>
     </div>
   );
 }

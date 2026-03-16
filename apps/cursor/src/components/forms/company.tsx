@@ -45,27 +45,13 @@ const formSchema = z.object({
     .optional(),
   website: z
     .string()
-    .transform((val) => (val === "" ? null : val))
-    .pipe(
-      z
-        .string()
-        .url({
-          message: "Please enter a valid website URL.",
-        })
-        .nullable(),
-    ),
+    .url({ message: "Please enter a valid website URL." })
+    .or(z.literal("")),
   social_x_link: z
     .string()
-    .transform((val) => (val === "" ? null : val))
-    .pipe(
-      z
-        .string()
-        .url({
-          message: "Please enter a valid X URL.",
-        })
-        .nullable(),
-    ),
-  is_public: z.boolean().default(true),
+    .url({ message: "Please enter a valid X URL." })
+    .or(z.literal("")),
+  is_public: z.boolean().optional(),
   image: z.string().url().nullable(),
 });
 
@@ -124,7 +110,7 @@ export function CompanyForm({
       bio: data.bio || null,
       website: data.website || null,
       social_x_link: data.social_x_link || null,
-      is_public: data.is_public,
+      is_public: data.is_public ?? true,
       image: data.image || null,
       redirect,
     });
@@ -262,7 +248,7 @@ export function CompanyForm({
           </div>
         </ScrollArea>
 
-        <Button type="submit" className="w-full" disabled={isExecuting}>
+        <Button type="submit" size="lg" className="w-full" disabled={isExecuting}>
           {isExecuting ? "Saving..." : "Save Company"}
         </Button>
       </form>

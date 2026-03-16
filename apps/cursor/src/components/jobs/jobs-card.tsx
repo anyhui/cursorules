@@ -52,14 +52,14 @@ export function JobsCard({
             </Avatar>
           </Link>
           <div className="flex flex-row space-x-1 ">
-            <CardTitle className="text-xs text-[#878787] font-mono">
+            <CardTitle className="text-xs text-muted-foreground font-mono">
               <Link href={`/c/${company.slug}`}>{company.name}</Link>
             </CardTitle>
 
             {experience && (
               <>
-                <span className="text-xs text-[#878787] font-mono">•</span>
-                <span className="line-clamp-1 text-xs text-[#878787] font-mono">
+                <span className="text-xs text-muted-foreground font-mono">•</span>
+                <span className="line-clamp-1 text-xs text-muted-foreground font-mono">
                   {experience}
                 </span>
               </>
@@ -67,8 +67,8 @@ export function JobsCard({
 
             {location && (
               <>
-                <span className="text-xs text-[#878787] font-mono">•</span>
-                <span className="line-clamp-1 text-xs text-[#878787] font-mono">
+                <span className="text-xs text-muted-foreground font-mono">•</span>
+                <span className="line-clamp-1 text-xs text-muted-foreground font-mono">
                   {location}
                 </span>
               </>
@@ -76,8 +76,8 @@ export function JobsCard({
 
             {workplace && (
               <>
-                <span className="text-xs text-[#878787] font-mono">•</span>
-                <span className="line-clamp-1 text-xs text-[#878787] font-mono">
+                <span className="text-xs text-muted-foreground font-mono">•</span>
+                <span className="line-clamp-1 text-xs text-muted-foreground font-mono">
                   {workplace}
                 </span>
               </>
@@ -90,7 +90,7 @@ export function JobsCard({
             <Button
               variant="secondary"
               size="sm"
-              className="w-fit bg-[#1c1c1c] text-[#878787] hover:bg-[#2c2c2c] rounded-full font-mono text-xs"
+              className="w-fit rounded-full font-mono text-xs"
               asChild
             >
               <a
@@ -120,7 +120,7 @@ export function JobsCard({
       </CardHeader>
 
       <CardContent className="p-0 mt-2 pr-24">
-        <p className="text-sm line-clamp-2 text-[#878787]">{description}</p>
+        <p className="text-sm line-clamp-2 text-muted-foreground">{description}</p>
       </CardContent>
     </Card>
   );

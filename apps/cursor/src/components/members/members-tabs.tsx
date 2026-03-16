@@ -1,0 +1,228 @@
+"use client";
+
+import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
+import { cn } from "@/lib/utils";
+import { useQueryState } from "nuqs";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { SearchInput } from "../search-input";
+import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { CompanyCard, type Company } from "../company/company-card";
+import { MembersCard } from "./members-card";
+
+const PAGE_SIZE = 90;
+
+type Member = {
+  id: string;
+  slug: string;
+  image: string;
+  name: string;
+  follower_count: number;
+};
+
+const categoryTabs = [
+  { key: null, label: "Developers" },
+  { key: "companies", label: "Companies" },
+] as const;
+
+async function fetchMembersPage(
+  offset: number,
+  sort: string | null,
+  q: string | null,
+) {
+  const params = new URLSearchParams({ offset: String(offset) });
+  if (sort) params.set("sort", sort);
+  if (q) params.set("q", q);
+  const res = await fetch(`/api/members?${params}`);
+  const json = await res.json();
+  return json as { data: Member[]; hasMore: boolean };
+}
+
+export function MembersTabs({
+  totalMembers,
+  companies,
+}: {
+  totalMembers: number;
+  companies: Company[];
+}) {
+  const [selectedTab, setSelectedTab] = useQueryState("tab");
+  const [sort, setSort] = useQueryState("sort");
+  const [search] = useQueryState("q");
+  const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hasMoreMembers, setHasMoreMembers] = useState(true);
+  const [companyVisible, setCompanyVisible] = useState(PAGE_SIZE);
+  const offsetRef = useRef(0);
+  const loadingRef = useRef(false);
+  const sortRef = useRef(sort);
+  const searchRef = useRef(search);
+  sortRef.current = sort;
+  searchRef.current = search;
+
+  useEffect(() => {
+    let cancelled = false;
+    setMembers([]);
+    setHasMoreMembers(true);
+    setLoading(true);
+    offsetRef.current = 0;
+    loadingRef.current = true;
+
+    const debounce = setTimeout(() => {
+      fetchMembersPage(0, sort, search).then(({ data, hasMore }) => {
+        if (cancelled) return;
+        setMembers(data);
+        offsetRef.current = data.length;
+        setHasMoreMembers(hasMore);
+        loadingRef.current = false;
+        setLoading(false);
+      });
+    }, search ? 300 : 0);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(debounce);
+    };
+  }, [sort, search]);
+
+  const loadMoreMembers = useCallback(() => {
+    if (loadingRef.current || !hasMoreMembers) return;
+    loadingRef.current = true;
+
+    fetchMembersPage(offsetRef.current, sortRef.current, searchRef.current).then(
+      ({ data, hasMore }) => {
+        setMembers((prev) => [...prev, ...data]);
+        offsetRef.current += data.length;
+        setHasMoreMembers(hasMore);
+        loadingRef.current = false;
+      },
+    );
+  }, [hasMoreMembers]);
+
+  const filteredCompanies = useMemo(() => {
+    const q = (search ?? "").toLowerCase();
+    if (!q) return companies;
+    return companies.filter((c) => c.name.toLowerCase().includes(q));
+  }, [search, companies]);
+
+  const loadMoreCompanies = useCallback(
+    () =>
+      setCompanyVisible((prev) =>
+        Math.min(prev + PAGE_SIZE, filteredCompanies.length),
+      ),
+    [filteredCompanies.length],
+  );
+
+  const isCompanies = selectedTab === "companies";
+  const hasMore = isCompanies
+    ? companyVisible < filteredCompanies.length
+    : hasMoreMembers;
+
+  const sentinelRef = useInfiniteScroll(
+    isCompanies ? loadMoreCompanies : loadMoreMembers,
+    hasMore,
+  );
+
+  const handleTabChange = (key: string | null) => {
+    setSelectedTab(key);
+    setCompanyVisible(PAGE_SIZE);
+  };
+
+  const handleSortChange = (key: string | null) => {
+    setSort(key);
+  };
+
+  const visibleItems = isCompanies
+    ? filteredCompanies.slice(0, companyVisible)
+    : members;
+
+  return (
+    <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <SearchInput
+          placeholder={
+            isCompanies
+              ? "Search companies..."
+              : `Search ${totalMembers.toLocaleString()} members by name...`
+          }
+          className="max-w-[520px]"
+        />
+
+        {!isCompanies && (
+          <Select
+            value={sort ?? "recent"}
+            onValueChange={(v) => handleSortChange(v === "recent" ? null : v)}
+          >
+            <SelectTrigger className="h-11 w-[160px] flex-shrink-0 rounded-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="recent">Recent</SelectItem>
+              <SelectItem value="popular">Popular</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      <div className="mt-6 flex items-center gap-2">
+        {categoryTabs.map((tab) => (
+          <Button
+            key={tab.label}
+            variant={
+              tab.key === null
+                ? !selectedTab
+                  ? "secondary"
+                  : "ghost"
+                : selectedTab === tab.key
+                  ? "secondary"
+                  : "ghost"
+            }
+            className={cn(
+              "h-8 rounded-full px-4",
+              (tab.key === null ? !selectedTab : selectedTab === tab.key)
+                ? "text-foreground"
+                : "text-muted-foreground",
+            )}
+            onClick={() => handleTabChange(tab.key)}
+          >
+            {tab.label}
+          </Button>
+        ))}
+      </div>
+
+      {visibleItems.length > 0 ? (
+        <>
+          <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {isCompanies
+              ? (visibleItems as Company[]).map((company) => (
+                  <CompanyCard key={company.id} company={company} />
+                ))
+              : (visibleItems as Member[]).map((member) => (
+                  <MembersCard key={member.id} member={member} />
+                ))}
+          </div>
+
+          {hasMore && <div ref={sentinelRef} className="h-px" />}
+        </>
+      ) : loading ? null : (
+        <div className="mt-24 flex flex-col items-center">
+          <p className="text-center text-sm text-muted-foreground">
+            {isCompanies ? "No companies found" : "No members found"}
+          </p>
+          <Button
+            variant="outline"
+            className="mt-4 rounded-full border-border"
+            onClick={() => handleTabChange(null)}
+          >
+            Clear filters
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}

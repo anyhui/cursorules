@@ -24,24 +24,26 @@ export function ProfileTop({
   isOwner: boolean;
 }) {
   return (
-    <>
+    <div className="space-y-0">
       <ProfileHero userId={data?.id} isOwner={isOwner} hero={data?.hero} />
-      <ProfileHeader
-        id={data?.id}
-        image={data?.image}
-        name={data?.name}
-        status={data?.status}
-        isOwner={isOwner}
-        bio={data?.bio}
-        work={data?.work}
-        website={data?.website}
-        social_x_link={data?.social_x_link}
-        is_public={data?.public}
-        slug={data?.slug}
-        is_following={data?.is_following}
-        following_count={data?.following_count}
-        followers_count={data?.followers_count}
-      />
-    </>
+      <div>
+        <ProfileHeader
+          id={data?.id}
+          image={data?.image}
+          name={data?.name}
+          status={data?.status}
+          isOwner={isOwner}
+          bio={data?.bio}
+          work={data?.work}
+          website={data?.website}
+          social_x_link={data?.social_x_link}
+          is_public={data?.public}
+          slug={data?.slug}
+          is_following={data?.is_following}
+          following_count={data?.following_count}
+          followers_count={data?.followers_count}
+        />
+      </div>
+    </div>
   );
 }

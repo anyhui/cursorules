@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { type ChangeEvent, useRef } from "react";
 
-
 export function CompanyHero({
   companyId,
   isOwner,
@@ -20,18 +19,16 @@ export function CompanyHero({
 
   const handleFileInput = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    console.log(file);
     if (!file?.type.startsWith("image/")) {
       return;
     }
 
-    const MAX_FILE_SIZE = 1024 * 1024; // 1MB in bytes
+    const MAX_FILE_SIZE = 1024 * 1024;
     if (file.size > MAX_FILE_SIZE) {
       return;
     }
 
     try {
-      // Upload to Supabase Storage
       const supabase = createClient();
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
@@ -43,7 +40,6 @@ export function CompanyHero({
           upsert: false,
         });
 
-      // Get public URL
       const {
         data: { publicUrl },
       } = supabase.storage
@@ -65,15 +61,15 @@ export function CompanyHero({
 
   return (
     <div
-      className="w-full h-[145px] mb-8 relative"
+      className="relative mb-0 h-[180px] w-full overflow-hidden rounded-xl border border-border bg-card md:h-[220px]"
       style={{
         backgroundImage: !hero
           ? `repeating-linear-gradient(
       -60deg,
       transparent,
       transparent 1px,
-      #2C2C2C 1px,
-      #2C2C2C 2px,
+      color-mix(in oklab, var(--base) 16%, transparent) 1px,
+      color-mix(in oklab, var(--base) 16%, transparent) 2px,
       transparent 2px,
       transparent 6px
     )`
@@ -90,6 +86,7 @@ export function CompanyHero({
           priority
         />
       )}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[color:var(--bg-chrome)]/16 via-transparent to-transparent" />
       {isOwner && (
         <input
           ref={fileInputRef}
@@ -102,7 +99,8 @@ export function CompanyHero({
 
       {isOwner && (
         <button
-          className="absolute bottom-4 left-4 bg-black rounded-full size-8 flex items-center justify-center"
+          aria-label="Change cover image"
+          className="absolute right-4 top-4 flex h-9 items-center gap-2 rounded-full border border-border bg-card/92 px-3 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground"
           onClick={() => fileInputRef.current?.click()}
           type="button"
         >
@@ -127,11 +125,12 @@ export function CompanyHero({
             </mask>
             <g mask="url(#a)">
               <path
-                fill="#666"
+                fill="currentColor"
                 d="M1.5 10.5v-9h5.463l-1 1H2.5v7h7V6.025l1-1V10.5h-9Zm3-3V5.375L9.813.062 11.9 2.2 6.625 7.5H4.5Zm1-1h.7l2.9-2.9-.35-.35-.363-.35L5.5 5.787V6.5Z"
               />
             </g>
           </svg>
+          <span className="hidden md:inline">Edit cover</span>
         </button>
       )}
     </div>

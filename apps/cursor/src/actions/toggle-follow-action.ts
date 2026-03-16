@@ -32,7 +32,7 @@ export const toggleFollowAction = authActionClient
         const { data, error } = await supabase
           .from("followers")
           .insert({ follower_id: currentUserId, following_id: userId })
-          .select("follower:follower_id(name, slug, email)")
+          .select("follower:follower_id(name, slug)")
           .single();
 
         if (error) {

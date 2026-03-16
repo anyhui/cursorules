@@ -1,7 +1,7 @@
 "use client";
 
 import { formatNumber } from "@/utils/format";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { EditProfileModal } from "../modals/edit-profile-modal";
 import { FollowButton } from "./follow-button";
@@ -37,26 +37,34 @@ export function ProfileHeader({
   followers_count: number;
 }) {
   return (
-    <div className="flex items-center gap-4">
-      <Avatar className="size-24 border-border border flex items-center justify-center">
-        <AvatarImage src={image} />
+    <div className="relative z-10 mt-4 flex flex-col gap-4 pb-2 md:mt-5 md:flex-row md:items-center md:gap-6">
+      <Avatar className="size-20 border border-border bg-card md:size-24">
+        <AvatarImage src={image} className="object-cover" />
 
-        <AvatarFallback className="text-sm font-mono">
+        <AvatarFallback className="bg-muted text-lg font-medium text-foreground">
           {name?.charAt(0)}
         </AvatarFallback>
       </Avatar>
 
-      <div className="flex flex-col">
-        <h2 className="text-xl font-mono">{name}</h2>
-        <span className="text-sm font-mono text-[#878787]">{status}</span>
-        <div className="flex gap-6 mt-2">
+      <div className="flex min-w-0 flex-1 flex-col gap-2 md:pb-1">
+        <div className="space-y-1">
+          <h2 className="text-[26px] font-medium leading-[1.05] tracking-[-0.03em] text-foreground md:text-[34px]">
+            {name}
+          </h2>
+          {status ? (
+            <span className="block text-sm text-muted-foreground">
+              {status}
+            </span>
+          ) : null}
+        </div>
+        <div className="flex flex-wrap gap-4 pt-1 md:gap-5">
           <Link href={`/u/${slug}/following`}>
-            <span className="text-xs font-mono text-[#878787]">
+            <span className="text-sm text-muted-foreground transition-colors hover:text-foreground">
               {formatNumber(following_count)} Following
             </span>
           </Link>
           <Link href={`/u/${slug}/followers`}>
-            <span className="text-xs font-mono text-[#878787]">
+            <span className="text-sm text-muted-foreground transition-colors hover:text-foreground">
               {formatNumber(followers_count)} Followers
             </span>
           </Link>
@@ -64,7 +72,7 @@ export function ProfileHeader({
       </div>
 
       {isOwner ? (
-        <div className="ml-auto">
+        <div className="self-start md:ml-auto md:self-center">
           <EditProfileModal
             data={{
               name,
@@ -79,7 +87,7 @@ export function ProfileHeader({
           />
         </div>
       ) : (
-        <div className="ml-auto">
+        <div className="self-start md:ml-auto md:self-center">
           <FollowButton slug={slug} id={id} />
         </div>
       )}
