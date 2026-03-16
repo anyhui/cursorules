@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ActionError } from "./safe-action";
 import { authActionClient } from "./safe-action";
 
 const componentSchema = z.object({
@@ -62,10 +63,18 @@ export const createPluginAction = authActionClient
         .single();
 
       if (pluginError) {
-        throw new Error(pluginError.message);
+        if (pluginError.code === "23505") {
+          throw new ActionError(
+            "A plugin with this name already exists. Please choose a different name or repository.",
+          );
+        }
+        throw new ActionError(
+          `Failed to create plugin: ${pluginError.message}`,
+        );
       }
 
-      const componentRows = components.map((comp, i) => ({
+      type ComponentInput = z.infer<typeof componentSchema>;
+      const componentRows = components.map((comp: ComponentInput, i: number) => ({
         plugin_id: plugin.id,
         type: comp.type,
         name: comp.name,
@@ -87,7 +96,9 @@ export const createPluginAction = authActionClient
 
       if (compError) {
         await supabase.from("plugins").delete().eq("id", plugin.id);
-        throw new Error(compError.message);
+        throw new ActionError(
+          `Failed to save plugin components: ${compError.message}`,
+        );
       }
 
       revalidatePath("/plugins");
