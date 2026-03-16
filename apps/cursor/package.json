@@ -64,6 +64,7 @@
     "@types/react-dom": "^19",
     "@types/wicg-file-system-access": "^2023.10.7",
     "baseline-browser-mapping": "^2.10.8",
+    "lightningcss": "^1.32.0",
     "postcss": "^8",
     "react-email": "5.2.9",
     "tailwindcss": "^4.2.1",
