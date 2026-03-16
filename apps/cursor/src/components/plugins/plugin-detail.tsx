@@ -28,12 +28,8 @@ const COMPONENT_LABELS: Record<ComponentType, string> = {
 
 export function PluginDetailView({
   plugin,
-  starred,
-  isAuthenticated,
 }: {
   plugin: PluginRow;
-  starred: boolean;
-  isAuthenticated: boolean;
 }) {
   const components = plugin.plugin_components ?? [];
   const componentTypes = [...new Set(components.map((c) => c.type))] as ComponentType[];
@@ -63,14 +59,11 @@ export function PluginDetailView({
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-semibold tracking-tight">{plugin.name}</h1>
-              {isAuthenticated && (
-                <StarButton
-                  pluginId={plugin.id}
-                  slug={plugin.slug}
-                  starred={starred}
-                  starCount={plugin.star_count}
-                />
-              )}
+              <StarButton
+                pluginId={plugin.id}
+                slug={plugin.slug}
+                starCount={plugin.star_count}
+              />
             </div>
             {plugin.author_name && (
               <p className="mt-1 text-sm text-muted-foreground">

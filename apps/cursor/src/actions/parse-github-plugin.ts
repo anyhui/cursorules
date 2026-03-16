@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { ActionError } from "./safe-action";
 import { authActionClient } from "./safe-action";
 
 type ParsedComponent = {
@@ -163,7 +164,7 @@ export const parseGitHubPluginAction = authActionClient
   .action(async ({ parsedInput: { url } }) => {
     const parsed = parseGitHubUrl(url);
     if (!parsed) {
-      throw new Error(
+      throw new ActionError(
         "Invalid GitHub URL. Expected format: https://github.com/owner/repo",
       );
     }
@@ -172,19 +173,20 @@ export const parseGitHubPluginAction = authActionClient
 
     const tree = await fetchGitHubTree(owner, repo);
     if (tree.length === 0) {
-      throw new Error(
-        "Could not read repository. Make sure it's public or check the URL.",
+      throw new ActionError(
+        "Could not read repository. Make sure the repo exists, is public, and the URL is correct.",
       );
     }
 
-    // Look for manifest
-    const manifestPaths = [
+    // Look for manifest — check root-level, then per-plugin directories
+    const rootManifestPaths = [
       ".plugin/plugin.json",
       ".cursor-plugin/plugin.json",
       ".claude-plugin/plugin.json",
+      ".cursor-plugin/marketplace.json",
     ];
     let manifest: Record<string, unknown> = {};
-    for (const mp of manifestPaths) {
+    for (const mp of rootManifestPaths) {
       const content = await fetchGitHubFile(owner, repo, mp);
       if (content) {
         try {
@@ -196,170 +198,262 @@ export const parseGitHubPluginAction = authActionClient
       }
     }
 
+    // For multi-plugin repos, try reading the first plugin's manifest for metadata
+    if (!manifest.name) {
+      const pluginManifestFiles = tree.filter(
+        (f) =>
+          f.type === "blob" &&
+          /^plugins\/[^/]+\/.cursor-plugin\/plugin\.json$/.test(f.path),
+      );
+      for (const pmf of pluginManifestFiles) {
+        const content = await fetchGitHubFile(owner, repo, pmf.path);
+        if (!content) continue;
+        try {
+          const parsed = JSON.parse(content);
+          if (!manifest.name && parsed.name) manifest.name = parsed.name;
+          if (!manifest.description && parsed.description)
+            manifest.description = parsed.description;
+          if (!manifest.version && parsed.version)
+            manifest.version = parsed.version;
+          if (!manifest.author && parsed.author)
+            manifest.author = parsed.author;
+          if (!manifest.keywords && parsed.keywords)
+            manifest.keywords = parsed.keywords;
+          if (!manifest.license && parsed.license)
+            manifest.license = parsed.license;
+          break;
+        } catch {
+          // ignore
+        }
+      }
+    }
+
     const components: ParsedComponent[] = [];
 
-    // Discover rules (rules/*.mdc)
-    const ruleFiles = tree.filter(
-      (f) => f.type === "blob" && /^rules\/.*\.mdc$/.test(f.path),
-    );
-    for (const rf of ruleFiles) {
-      const raw = await fetchGitHubFile(owner, repo, rf.path);
-      if (!raw) continue;
-      const { data, body } = parseFrontmatter(raw);
-      const filename = rf.path.split("/").pop()?.replace(".mdc", "") ?? "";
+    // Determine root prefix(es) — support multi-plugin repos (plugins/*/)
+    const prefixes = [""];
+    const pluginDirs = tree
+      .filter(
+        (f) =>
+          f.type === "blob" &&
+          /^plugins\/[^/]+\/.cursor-plugin\/plugin\.json$/.test(f.path),
+      )
+      .map((f) => f.path.replace("/.cursor-plugin/plugin.json", "") + "/");
+    if (pluginDirs.length > 0) prefixes.push(...pluginDirs);
 
-      components.push({
-        type: "rule",
-        name: (data.title as string) || (data.description as string) || filename,
-        slug: slugify(filename),
-        description: (data.description as string) || body.trim().slice(0, 200),
-        content: body.trim(),
-        metadata: {
-          tags: (data.tags as string[]) ?? [],
-          libs: (data.libs as string[]) ?? [],
-          ...(data.globs ? { globs: data.globs } : {}),
-          ...(data.alwaysApply === true || data.alwaysApply === "true"
-            ? { always_apply: true }
-            : {}),
-          ...(data.author
-            ? {
-                author_name: (data.author as Record<string, string>).name,
-                author_url: (data.author as Record<string, string>).url,
-                author_avatar: (data.author as Record<string, string>).avatar,
-              }
-            : {}),
-        },
-      });
-    }
+    for (const prefix of prefixes) {
+      // Discover rules (rules/*.mdc)
+      const ruleFiles = tree.filter(
+        (f) =>
+          f.type === "blob" &&
+          new RegExp(`^${prefix}rules/.*\\.mdc$`).test(f.path),
+      );
+      for (const rf of ruleFiles) {
+        const raw = await fetchGitHubFile(owner, repo, rf.path);
+        if (!raw) continue;
+        const { data, body } = parseFrontmatter(raw);
+        const filename = rf.path.split("/").pop()?.replace(".mdc", "") ?? "";
 
-    // Discover MCP servers (.mcp.json)
-    const mcpContent = await fetchGitHubFile(owner, repo, ".mcp.json");
-    if (mcpContent) {
-      try {
-        const mcpConfig = JSON.parse(mcpContent);
-        const servers = mcpConfig.mcpServers ?? mcpConfig;
-        for (const [name, config] of Object.entries(servers)) {
-          const cfg = config as Record<string, unknown>;
-          components.push({
-            type: "mcp_server",
-            name,
-            slug: slugify(name),
-            description: `MCP server: ${name}`,
-            content: JSON.stringify(cfg, null, 2),
-            metadata: {
-              command: cfg.command,
-              args: cfg.args,
-              env: cfg.env,
-              link: `https://github.com/${owner}/${repo}`,
-            },
-          });
-        }
-      } catch {
-        // ignore invalid JSON
-      }
-    }
-
-    // Discover agents (agents/*.md)
-    const agentFiles = tree.filter(
-      (f) => f.type === "blob" && /^agents\/.*\.md$/.test(f.path),
-    );
-    for (const af of agentFiles) {
-      const raw = await fetchGitHubFile(owner, repo, af.path);
-      if (!raw) continue;
-      const { data, body } = parseFrontmatter(raw);
-      const filename = af.path.split("/").pop()?.replace(".md", "") ?? "";
-
-      components.push({
-        type: "agent",
-        name: (data.name as string) || filename,
-        slug: slugify(filename),
-        description: (data.description as string) || body.trim().slice(0, 200),
-        content: body.trim(),
-        metadata: {},
-      });
-    }
-
-    // Discover skills (skills/*/SKILL.md)
-    const skillFiles = tree.filter(
-      (f) => f.type === "blob" && /^skills\/[^/]+\/SKILL\.md$/.test(f.path),
-    );
-    for (const sf of skillFiles) {
-      const raw = await fetchGitHubFile(owner, repo, sf.path);
-      if (!raw) continue;
-      const { data, body } = parseFrontmatter(raw);
-      const dirName = sf.path.split("/")[1] ?? "";
-
-      components.push({
-        type: "skill",
-        name: (data.name as string) || dirName,
-        slug: slugify(dirName),
-        description: (data.description as string) || body.trim().slice(0, 200),
-        content: body.trim(),
-        metadata: {},
-      });
-    }
-
-    // Discover commands (commands/*.md)
-    const commandFiles = tree.filter(
-      (f) => f.type === "blob" && /^commands\/.*\.md$/.test(f.path),
-    );
-    for (const cf of commandFiles) {
-      const raw = await fetchGitHubFile(owner, repo, cf.path);
-      if (!raw) continue;
-      const { data, body } = parseFrontmatter(raw);
-      const filename = cf.path.split("/").pop()?.replace(".md", "") ?? "";
-
-      components.push({
-        type: "command",
-        name: filename,
-        slug: slugify(filename),
-        description: (data.description as string) || body.trim().slice(0, 200),
-        content: body.trim(),
-        metadata: {},
-      });
-    }
-
-    // Discover hooks (hooks/hooks.json)
-    const hooksContent = await fetchGitHubFile(owner, repo, "hooks/hooks.json");
-    if (hooksContent) {
-      try {
-        const hooksConfig = JSON.parse(hooksContent);
         components.push({
-          type: "hook",
-          name: "hooks",
-          slug: "hooks",
-          description: "Event hooks configuration",
-          content: JSON.stringify(hooksConfig, null, 2),
+          type: "rule",
+          name:
+            (data.title as string) ||
+            (data.description as string) ||
+            filename,
+          slug: slugify(filename),
+          description:
+            (data.description as string) || body.trim().slice(0, 200),
+          content: body.trim(),
+          metadata: {
+            tags: (data.tags as string[]) ?? [],
+            libs: (data.libs as string[]) ?? [],
+            ...(data.globs ? { globs: data.globs } : {}),
+            ...(data.alwaysApply === true || data.alwaysApply === "true"
+              ? { always_apply: true }
+              : {}),
+            ...(data.author
+              ? {
+                  author_name: (data.author as Record<string, string>).name,
+                  author_url: (data.author as Record<string, string>).url,
+                  author_avatar: (data.author as Record<string, string>)
+                    .avatar,
+                }
+              : {}),
+          },
+        });
+      }
+
+      // Discover MCP servers (.mcp.json or mcp.json)
+      for (const mcpPath of [`${prefix}.mcp.json`, `${prefix}mcp.json`]) {
+        const mcpContent = await fetchGitHubFile(owner, repo, mcpPath);
+        if (!mcpContent) continue;
+        try {
+          const mcpConfig = JSON.parse(mcpContent);
+          const servers = mcpConfig.mcpServers ?? mcpConfig;
+          for (const [name, config] of Object.entries(servers)) {
+            const cfg = config as Record<string, unknown>;
+            components.push({
+              type: "mcp_server",
+              name,
+              slug: slugify(name),
+              description: `MCP server: ${name}`,
+              content: JSON.stringify(cfg, null, 2),
+              metadata: {
+                command: cfg.command,
+                args: cfg.args,
+                env: cfg.env,
+                link: `https://github.com/${owner}/${repo}`,
+              },
+            });
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      // Discover agents (agents/*.md)
+      const agentFiles = tree.filter(
+        (f) =>
+          f.type === "blob" &&
+          new RegExp(`^${prefix}agents/.*\\.md$`).test(f.path),
+      );
+      for (const af of agentFiles) {
+        const raw = await fetchGitHubFile(owner, repo, af.path);
+        if (!raw) continue;
+        const { data, body } = parseFrontmatter(raw);
+        const filename = af.path.split("/").pop()?.replace(".md", "") ?? "";
+
+        components.push({
+          type: "agent",
+          name: (data.name as string) || filename,
+          slug: slugify(filename),
+          description:
+            (data.description as string) || body.trim().slice(0, 200),
+          content: body.trim(),
           metadata: {},
         });
-      } catch {
-        // ignore
       }
-    }
 
-    // Discover LSP servers (.lsp.json)
-    const lspContent = await fetchGitHubFile(owner, repo, ".lsp.json");
-    if (lspContent) {
-      try {
-        const lspConfig = JSON.parse(lspContent);
-        for (const [name, config] of Object.entries(lspConfig)) {
+      // Discover skills (skills/*/SKILL.md)
+      const skillFiles = tree.filter(
+        (f) =>
+          f.type === "blob" &&
+          new RegExp(`^${prefix}skills/[^/]+/SKILL\\.md$`).test(f.path),
+      );
+      for (const sf of skillFiles) {
+        const raw = await fetchGitHubFile(owner, repo, sf.path);
+        if (!raw) continue;
+        const { data, body } = parseFrontmatter(raw);
+        const parts = sf.path.split("/");
+        const dirName = parts[parts.indexOf("skills") + 1] ?? "";
+
+        components.push({
+          type: "skill",
+          name: (data.name as string) || dirName,
+          slug: slugify(dirName),
+          description:
+            (data.description as string) || body.trim().slice(0, 200),
+          content: body.trim(),
+          metadata: {},
+        });
+      }
+
+      // Discover commands (commands/*.md)
+      const commandFiles = tree.filter(
+        (f) =>
+          f.type === "blob" &&
+          new RegExp(`^${prefix}commands/.*\\.md$`).test(f.path),
+      );
+      for (const cf of commandFiles) {
+        const raw = await fetchGitHubFile(owner, repo, cf.path);
+        if (!raw) continue;
+        const { data, body } = parseFrontmatter(raw);
+        const filename = cf.path.split("/").pop()?.replace(".md", "") ?? "";
+
+        components.push({
+          type: "command",
+          name: filename,
+          slug: slugify(filename),
+          description:
+            (data.description as string) || body.trim().slice(0, 200),
+          content: body.trim(),
+          metadata: {},
+        });
+      }
+
+      // Discover hooks (hooks/hooks.json)
+      const hooksContent = await fetchGitHubFile(
+        owner,
+        repo,
+        `${prefix}hooks/hooks.json`,
+      );
+      if (hooksContent) {
+        try {
+          const hooksConfig = JSON.parse(hooksContent);
           components.push({
-            type: "lsp_server",
-            name,
-            slug: slugify(name),
-            description: `LSP server: ${name}`,
-            content: JSON.stringify(config, null, 2),
-            metadata: config as Record<string, unknown>,
+            type: "hook",
+            name: "hooks",
+            slug: `hooks${prefix ? `-${slugify(prefix)}` : ""}`,
+            description: "Event hooks configuration",
+            content: JSON.stringify(hooksConfig, null, 2),
+            metadata: {},
           });
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore
+      }
+
+      // Discover LSP servers (.lsp.json)
+      const lspContent = await fetchGitHubFile(
+        owner,
+        repo,
+        `${prefix}.lsp.json`,
+      );
+      if (lspContent) {
+        try {
+          const lspConfig = JSON.parse(lspContent);
+          for (const [name, config] of Object.entries(lspConfig)) {
+            components.push({
+              type: "lsp_server",
+              name,
+              slug: slugify(name),
+              description: `LSP server: ${name}`,
+              content: JSON.stringify(config, null, 2),
+              metadata: config as Record<string, unknown>,
+            });
+          }
+        } catch {
+          // ignore
+        }
       }
     }
 
-    if (components.length === 0) {
-      throw new Error(
-        "No plugin components found. Make sure the repo has rules/, .mcp.json, skills/, agents/, or other Open Plugins components.",
+    // Deduplicate components by slug+type
+    const seen = new Set<string>();
+    const deduped = components.filter((c) => {
+      const key = `${c.type}:${c.slug}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    if (deduped.length === 0) {
+      const scannedPrefixes = prefixes
+        .map((p) => (p === "" ? "repo root" : p.replace(/\/$/, "")))
+        .join(", ");
+      const hints = [
+        "rules/*.mdc",
+        ".mcp.json or mcp.json",
+        "skills/*/SKILL.md",
+        "agents/*.md",
+        "commands/*.md",
+        "hooks/hooks.json",
+        ".lsp.json",
+      ];
+      throw new ActionError(
+        `No plugin components found in: ${scannedPrefixes}. ` +
+          `We looked for: ${hints.join(", ")}. ` +
+          `Make sure your repo follows the Open Plugins standard (https://open-plugins.com).`,
       );
     }
 
@@ -378,7 +472,7 @@ export const parseGitHubPluginAction = authActionClient
       author_name: author?.name,
       author_url: author?.url || author?.email,
       author_avatar: author?.avatar,
-      components,
+      components: deduped,
     };
 
     return result;

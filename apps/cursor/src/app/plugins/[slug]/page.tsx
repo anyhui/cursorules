@@ -1,10 +1,5 @@
 import { PluginDetailView } from "@/components/plugins/plugin-detail";
-import {
-  getPluginBySlug,
-  getPlugins,
-  hasUserStarredPlugin,
-} from "@/data/queries";
-import { getSession } from "@/utils/supabase/auth";
+import { getPluginBySlug, getPlugins } from "@/data/queries";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -37,22 +32,9 @@ export default async function Page({ params }: { params: Params }) {
   const { slug } = await params;
 
   const { data: plugin } = await getPluginBySlug(slug);
-  if (plugin) {
-    const session = await getSession();
-    const starred = session
-      ? await hasUserStarredPlugin(plugin.id, session.user.id)
-      : false;
+  if (!plugin) notFound();
 
-    return (
-      <PluginDetailView
-        plugin={plugin}
-        starred={starred}
-        isAuthenticated={!!session}
-      />
-    );
-  }
-
-  notFound();
+  return <PluginDetailView plugin={plugin} />;
 }
 
 export const revalidate = 3600;

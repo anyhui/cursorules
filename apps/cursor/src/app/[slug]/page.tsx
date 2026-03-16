@@ -31,3 +31,5 @@ export default async function Page({ params }: { params: Params }) {
 
   notFound();
 }
+
+export const revalidate = 3600;
