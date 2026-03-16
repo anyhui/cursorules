@@ -39,7 +39,7 @@ export default async function Page({ params }: { params: Params }) {
   return (
     <div className="page-shell max-w-4xl min-h-screen pb-32 pt-24 md:pt-32">
       <div className="w-full">
-        <ProfileTop data={data} isOwner={false} />
+        <ProfileTop data={data} isOwner={session.user.id === data.id} />
 
         <div className="mt-12 border-t border-border pt-6">
           <h3 className="section-eyebrow">Followers</h3>
