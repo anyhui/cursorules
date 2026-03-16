@@ -7,6 +7,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { navigationLinks } from "./header";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -91,50 +92,30 @@ export function MobileMenu() {
         )}
       </div>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
-            className="fixed inset-x-0 bottom-0 top-16 z-[99999] w-screen bg-background/95 p-4 backdrop-blur-xl"
+      {isOpen &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[99999] bg-background p-4"
+            style={{ top: "56px" }}
           >
             <div className="flex flex-col">
-              {navigationLinks.map((link, index) => (
-                <motion.div
+              {navigationLinks.map((link) => (
+                <Link
                   key={link.href}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{
-                    delay: navigationLinks.length * 0.02 + index * 0.02,
-                    duration: 0.1,
-                  }}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={cn(
+                    "block rounded-md py-5 text-sm font-medium",
+                    pathname === link.href
+                      ? "text-primary"
+                      : "text-muted-foreground",
+                  )}
                 >
-                  <Link
-                    href={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "block rounded-md py-5 text-sm font-medium",
-                      pathname === link.href
-                        ? "text-primary"
-                        : "text-muted-foreground",
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                </motion.div>
+                  {link.label}
+                </Link>
               ))}
 
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="mt-12"
-                transition={{
-                  delay: navigationLinks.length * 0.02 + 0.05,
-                  duration: 0.1,
-                }}
-              >
+              <div className="mt-12">
                 {user ? (
                   <>
                     <Link
@@ -166,11 +147,11 @@ export function MobileMenu() {
                     </Button>
                   </Link>
                 )}
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>,
+          document.body,
         )}
-      </AnimatePresence>
     </>
   );
 }

@@ -18,11 +18,17 @@ export function SearchInput({
     shallow,
   });
 
+  const handleClear = () => setSearch("");
+
   return (
     <SearchField
       placeholder={placeholder}
       value={search}
       onChange={setSearch}
+      onClear={handleClear}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") handleClear();
+      }}
       className={cn("w-full", className)}
     />
   );
