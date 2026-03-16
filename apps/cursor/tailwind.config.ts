@@ -27,7 +27,16 @@ const config = {
           "Apple Color Emoji",
           "Segoe UI Emoji",
         ],
-        mono: "var(--font-geist-mono)",
+        mono: [
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Monaco",
+          "Consolas",
+          "Liberation Mono",
+          "Courier New",
+          "monospace",
+        ],
       },
       colors: {
         border: "var(--border)",
