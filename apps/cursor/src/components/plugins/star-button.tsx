@@ -4,7 +4,7 @@ import { starPluginAction } from "@/actions/star-plugin";
 import { cn } from "@/lib/utils";
 import { Star } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
-import { useOptimistic } from "react";
+import { useOptimistic, useTransition } from "react";
 import { Button } from "../ui/button";
 
 function formatCount(n: number): string {
@@ -15,10 +15,12 @@ function formatCount(n: number): string {
 
 export function StarButton({
   pluginId,
+  slug,
   starred,
   starCount,
 }: {
   pluginId: string;
+  slug: string;
   starred: boolean;
   starCount: number;
 }) {
@@ -31,6 +33,7 @@ export function StarButton({
   );
 
   const { execute } = useAction(starPluginAction);
+  const [, startTransition] = useTransition();
 
   return (
     <Button
@@ -41,8 +44,10 @@ export function StarButton({
         optimistic.starred && "text-yellow-500",
       )}
       onClick={() => {
-        setOptimistic(optimistic);
-        execute({ pluginId });
+        startTransition(() => {
+          setOptimistic(optimistic);
+          execute({ pluginId, slug });
+        });
       }}
     >
       <Star

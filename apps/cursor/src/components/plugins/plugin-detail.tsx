@@ -66,6 +66,7 @@ export function PluginDetailView({
               {isAuthenticated && (
                 <StarButton
                   pluginId={plugin.id}
+                  slug={plugin.slug}
                   starred={starred}
                   starCount={plugin.star_count}
                 />
