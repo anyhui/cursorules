@@ -7,6 +7,13 @@ import { useQueryState } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
 import { SearchInput } from "../search-input";
 import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { type PluginCardData, PluginCard } from "./plugin-card";
 
 const ITEMS_PER_PAGE = 36;
@@ -20,11 +27,11 @@ export function PluginList({
 }) {
   const [search] = useQueryState("q");
   const [selectedTag, setSelectedTag] = useQueryState("tag");
+  const [sort, setSort] = useQueryState("sort");
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   const tabs = [
     { key: null, label: "All" },
-    { key: "popular", label: "Popular" },
     { key: "mcp", label: "MCPs" },
     { key: "rules", label: "Rules" },
   ] as const;
@@ -49,11 +56,7 @@ export function PluginList({
   const filtered = useMemo(() => {
     let result = plugins;
 
-    if (selectedTag === "popular") {
-      result = [...result]
-        .filter((p) => (p.starCount ?? 0) > 0)
-        .sort((a, b) => (b.starCount ?? 0) - (a.starCount ?? 0));
-    } else if (selectedTag === "mcp") {
+    if (selectedTag === "mcp") {
       result = result.filter((p) => p.type === "mcp" || p.type === "both");
     } else if (selectedTag === "rules") {
       result = result.filter((p) => p.type === "rules" || p.type === "both");
@@ -72,8 +75,12 @@ export function PluginList({
         .map((r) => r.item);
     }
 
+    if (sort !== "recent") {
+      result = [...result].sort((a, b) => (b.starCount ?? 0) - (a.starCount ?? 0));
+    }
+
     return result;
-  }, [plugins, search, selectedTag, fuse]);
+  }, [plugins, search, selectedTag, sort, fuse]);
 
   const loadMore = useCallback(
     () => setVisibleCount((prev) => Math.min(prev + ITEMS_PER_PAGE, filtered.length)),
@@ -85,10 +92,25 @@ export function PluginList({
 
   return (
     <div>
-      <SearchInput
-        placeholder={`Search ${plugins.length} plugins by name, keyword...`}
-        className="max-w-[520px]"
-      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <SearchInput
+          placeholder={`Search ${plugins.length} plugins by name, keyword...`}
+          className="max-w-[520px]"
+        />
+
+        <Select
+          value={sort ?? "popular"}
+          onValueChange={(v) => setSort(v === "popular" ? null : v)}
+        >
+          <SelectTrigger className="h-11 w-[160px] flex-shrink-0 rounded-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="recent">Recent</SelectItem>
+            <SelectItem value="popular">Popular</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <div className="mt-6 flex items-center gap-2">
         {tabs.map((tab) => (

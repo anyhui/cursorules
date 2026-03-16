@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Skeleton } from "../ui/skeleton";
 import { CompanyCard, type Company } from "../company/company-card";
 import { MembersCard } from "./members-card";
 
@@ -195,7 +196,19 @@ export function MembersTabs({
         ))}
       </div>
 
-      {visibleItems.length > 0 ? (
+      {loading && visibleItems.length === 0 ? (
+        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-md border border-border p-3">
+              <Skeleton className="size-10 rounded-[6px]" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : visibleItems.length > 0 ? (
         <>
           <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {isCompanies
@@ -209,7 +222,7 @@ export function MembersTabs({
 
           {hasMore && <div ref={sentinelRef} className="h-px" />}
         </>
-      ) : loading ? null : (
+      ) : (
         <div className="mt-24 flex flex-col items-center">
           <p className="text-center text-sm text-muted-foreground">
             {isCompanies ? "No companies found" : "No members found"}

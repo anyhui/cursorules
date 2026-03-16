@@ -29,7 +29,7 @@ export function Header({
 
   return (
     <div className="relative z-30 flex items-center justify-between">
-      <div className="fixed inset-x-0 top-0 bg-background/92 backdrop-blur-xl">
+      <div className="fixed inset-x-0 top-0 z-50 bg-background/92 backdrop-blur-xl">
         <div className="mx-auto flex h-[56px] w-full max-w-[1300px] items-center justify-between px-4 text-[15px] md:h-[60px] md:px-6">
           <Link
             href="/"
@@ -42,9 +42,7 @@ export function Header({
             />
           </Link>
 
-          <div className="md:hidden">
-            <MobileMenu />
-          </div>
+          <MobileMenu />
 
           <div className="hidden items-center gap-2 md:flex">
             {navigationLinks.map((link) => (
