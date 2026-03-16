@@ -37,15 +37,18 @@ export default async function Page({ params }: { params: Params }) {
   }
 
   return (
-    <div className="flex mx-auto max-w-4xl min-h-screen w-full md:mt-28 mt-14 px-6 lg:px-0">
+    <div className="page-shell max-w-4xl min-h-screen pb-32 pt-24 md:pt-32">
       <div className="w-full">
-        <ProfileTop data={data} isOwner={false} />
+        <ProfileTop data={data} isOwner={session.user.id === data.id} />
 
-        <div className="mt-10">
-          <h3 className="text-lg font-mono">Following</h3>
-          <div className="flex flex-col gap-2 mt-4">
+        <div className="mt-12 border-t border-border pt-6">
+          <h3 className="section-eyebrow">Following</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Following {following?.length ?? 0} people.
+          </p>
+          <div className="mt-5 flex flex-col gap-1">
             {following?.length === 0 && (
-              <div className="text-sm text-[#878787]">No following</div>
+              <div className="text-sm text-muted-foreground">No following</div>
             )}
             {following?.map((user) => (
               <MembersCard

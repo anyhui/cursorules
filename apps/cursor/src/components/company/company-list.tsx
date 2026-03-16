@@ -21,10 +21,7 @@ export function CompanyList({ data }: { data?: Company[] | null }) {
 
   return (
     <div className="mt-8">
-      <SearchInput
-        placeholder="Search companies"
-        className="border-l-0 border-r-0 border-t-0 border-b-[1px] border-border px-0"
-      />
+      <SearchInput placeholder="Search companies" />
 
       {companies.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6 mt-8">
@@ -34,7 +31,7 @@ export function CompanyList({ data }: { data?: Company[] | null }) {
         </div>
       ) : (
         <div className="mt-24 flex flex-col items-center">
-          <div className="text-center text-sm text-[#878787]">
+          <div className="text-center text-sm text-muted-foreground">
             No companies found
           </div>
 

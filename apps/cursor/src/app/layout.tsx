@@ -1,18 +1,17 @@
 import "./globals.css";
+import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { JoinCTA } from "@/components/join-cta";
 import { GlobalModals } from "@/components/modals/global-modals";
 import { ScrollToTop } from "@/components/scroll-to-top";
-import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import { getPlugins } from "@directories/data/plugins";
+import { getPlugins } from "@/data/queries";
 import { OpenPanelComponent } from "@openpanel/nextjs";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans } from "geist/font/sans";
-import { PlusIcon } from "lucide-react";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { cursorGothic } from "@/styles/fonts";
 
 export const metadata: Metadata = {
   title: "Cursor Directory",
@@ -20,7 +19,7 @@ export const metadata: Metadata = {
   icons: [
     {
       rel: "icon",
-      url: "https://cdn.midday.ai/cursor/favicon.png",
+      url: "/favicon.svg",
     },
   ],
   openGraph: {
@@ -66,26 +65,32 @@ export const viewport = {
   maximumScale: 1,
   userScalable: false,
   themeColor: [
-    // { media: "(prefers-color-scheme: light)" },
-    { media: "(prefers-color-scheme: dark)" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f7f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#14120b" },
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const { data: plugins } = await getPlugins({ fetchAll: true });
+  const pluginItems = (plugins ?? []).map((p) => ({
+    name: p.name,
+    slug: p.slug,
+  }));
+
   return (
     <html
       lang="en"
       suppressHydrationWarning
       className={cn(
-        `${GeistSans.variable} ${GeistMono.variable}`,
-        "whitespace-pre-line antialiased bg-background text-foreground !dark",
+        `${cursorGothic.variable}`,
+        "whitespace-pre-line antialiased",
       )}
     >
-      <body>
+      <body className="bg-background text-foreground">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -94,27 +99,10 @@ export default function RootLayout({
         >
           <NuqsAdapter>
             <ScrollToTop />
-            <Header
-              pluginItems={getPlugins().map((p) => ({
-                name: p.name,
-                slug: p.slug,
-              }))}
-            />
+            <Header pluginItems={pluginItems} />
             {children}
-
-            <a
-              href="https://github.com/pontusab/cursor.directory"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Button
-                className="hidden size-[48px] bg-[#F5F5F3]/30 text-black border border-black rounded-full font-medium fixed bottom-4 left-6 z-10 backdrop-blur-lg dark:bg-[#F5F5F3]/30 dark:text-white dark:border-white"
-                variant="outline"
-                size="icon"
-              >
-                <PlusIcon className="w-4 h-4" />
-              </Button>
-            </a>
+            <JoinCTA />
+            <Footer />
 
             <Toaster />
             <GlobalModals />

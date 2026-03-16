@@ -54,11 +54,9 @@ export async function Company({
 
       <CompanyJobs slug={data?.slug} />
 
-      <div className="my-14 space-y-10 w-full">
-        <div className="text-sm text-[#878787] flex justify-between items-center border-t border-border pt-6">
-          <span>Joined Cursor Directory</span>
-          {format(new Date(data?.created_at), "MMM d, yyyy")}
-        </div>
+      <div className="mt-10 flex items-center justify-between border-t border-border pt-6 text-sm text-muted-foreground">
+        <span>Joined Cursor Directory</span>
+        {format(new Date(data?.created_at), "MMM d, yyyy")}
       </div>
     </div>
   );

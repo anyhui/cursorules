@@ -21,7 +21,6 @@ type User = {
   id: string;
   slug: string;
   name?: string;
-  email?: string;
   image?: string;
 };
 
@@ -48,7 +47,7 @@ export function UserMenu() {
 
       const { data } = await supabase
         .from("users")
-        .select("*")
+        .select("id, slug, name, image")
         .eq("id", session.data.session?.user?.id)
         .single();
 
@@ -87,7 +86,7 @@ export function UserMenu() {
             <DropdownMenuTrigger asChild>
               <Avatar className="size-6 rounded-none cursor-pointer">
                 <AvatarImage src={user?.image} className="rounded-none" />
-                <AvatarFallback className="text-xs bg-[#878787]">
+                <AvatarFallback className="rounded-md bg-muted text-xs text-foreground">
                   {user?.name?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
@@ -123,10 +122,7 @@ export function UserMenu() {
         </div>
       ) : (
         <Link href={`/login?next=${pathname}`}>
-          <Button
-            variant="outline"
-            className="bg-white text-black h-8 rounded-full"
-          >
+          <Button variant="default" className="h-8 rounded-full">
             Sign In
           </Button>
         </Link>

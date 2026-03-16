@@ -11,14 +11,14 @@ export function ProfilePosts({
 }) {
   if (!data?.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center h-full mt-12">
-        <p className="text-[#878787] mb-4 text-sm font-mono">
+      <div className="surface-card mt-6 flex h-full flex-col items-center justify-center rounded-lg py-12 text-center">
+        <p className="mb-4 text-sm text-muted-foreground">
           No posts added yet
         </p>
 
         {isOwner && (
           <Link href="/board">
-            <Button variant="outline" className="border-border rounded-full">
+            <Button variant="outline" size="lg">
               Add post
             </Button>
           </Link>
@@ -28,7 +28,7 @@ export function ProfilePosts({
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 pt-2">
       {data?.map((post) => (
         // @ts-ignore
         <div key={post.id}>

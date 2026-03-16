@@ -26,16 +26,45 @@ export interface Event {
   tags: string[];
 }
 
-export async function getEvents(): Promise<{ entries: Event[] }> {
-  const response = await fetch(
-    `${API_ENDPOINT}/calendar/list-events?pagination_limit=100`,
-    {
-      method: "GET",
-      headers: {
-        "X-Luma-API-Key": process.env.LUMA_API_KEY || "",
-      },
-    },
-  );
+interface LumaResponse {
+  entries: Event[];
+  has_more: boolean;
+  next_cursor: string | null;
+}
 
-  return response.json();
+export async function getEvents(): Promise<{ entries: Event[] }> {
+  const allEntries: Event[] = [];
+
+  // Fetch events from 90 days ago onward so we get recent past + upcoming
+  const since = new Date();
+  since.setDate(since.getDate() - 90);
+  const afterParam = `&after=${since.toISOString()}`;
+
+  let cursor: string | null = null;
+  let pages = 0;
+  const MAX_PAGES = 10;
+
+  do {
+    const cursorParam = cursor
+      ? `&pagination_cursor=${encodeURIComponent(cursor)}`
+      : "";
+
+    const response = await fetch(
+      `${API_ENDPOINT}/calendar/list-events?pagination_limit=100${afterParam}${cursorParam}`,
+      {
+        method: "GET",
+        headers: {
+          "X-Luma-API-Key": process.env.LUMA_API_KEY || "",
+        },
+      },
+    );
+
+    const data: LumaResponse = await response.json();
+    allEntries.push(...(data.entries ?? []));
+
+    cursor = data.has_more ? data.next_cursor : null;
+    pages++;
+  } while (cursor && pages < MAX_PAGES);
+
+  return { entries: allEntries };
 }

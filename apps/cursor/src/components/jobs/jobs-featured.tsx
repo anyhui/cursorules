@@ -7,7 +7,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Plus } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -41,15 +40,6 @@ export function JobsFeatured({
     >
       {!hidePagination && (
         <div className="absolute -top-16 right-0 gap-2 hidden md:flex">
-          <Link href="/jobs/new">
-            <Button
-              variant="outline"
-              className="rounded-full h-8 flex items-center gap-2 border-border"
-            >
-              Add job listing
-              <Plus className="size-4" />
-            </Button>
-          </Link>
           <CarouselPrevious />
           <CarouselNext />
         </div>
@@ -68,14 +58,14 @@ export function JobsFeatured({
                           alt={job.company.name}
                         />
                       ) : (
-                        <AvatarFallback className="bg-[#1c1c1c] rounded-none">
+                        <AvatarFallback className="bg-accent rounded-none">
                           {job.company.name.charAt(0)}
                         </AvatarFallback>
                       )}
                     </Avatar>
                   </Link>
                   <div>
-                    <div className="flex items-center gap-2 text-xs text-[#878787] font-mono line-clamp-1">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono line-clamp-1">
                       <Link href={`/c/${job.company.slug}`}>
                         <span className="line-clamp-1">{job.company.name}</span>
                       </Link>
@@ -89,13 +79,13 @@ export function JobsFeatured({
                     <h3 className="text-md line-clamp-1">{job.title}</h3>
                   </div>
                 </div>
-                <p className="text-[#878787] text-sm line-clamp-2">
+                <p className="text-muted-foreground text-sm line-clamp-2">
                   {job.description}
                 </p>
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-fit bg-[#1c1c1c] text-[#878787] hover:bg-[#2c2c2c] rounded-full font-mono text-xs"
+                  className="w-fit rounded-full font-mono text-xs"
                   asChild
                 >
                   <a

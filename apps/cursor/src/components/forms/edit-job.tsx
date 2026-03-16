@@ -28,7 +28,7 @@ import { Button } from "../ui/button";
 
 const formSchema = z.object({
   company_id: z.string({
-    required_error: "Please select a company.",
+    error: "Please select a company.",
   }),
   title: z.string().min(2, {
     message: "Title must be at least 2 characters.",
@@ -242,6 +242,7 @@ export function EditJobForm({ data }: { data: JobData }) {
 
         <Button
           type="submit"
+          size="lg"
           className="w-full"
           disabled={isExecuting || !form.formState.isDirty}
         >

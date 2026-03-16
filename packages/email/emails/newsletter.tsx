@@ -150,7 +150,6 @@ const Newsletter = () => {
         <Head>
           <style>
             {`
-              @import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap');
               .mcp-row{white-space:nowrap!important}
               .mcp-col-5,.mcp-col-4{width:24%!important;max-width:24%!important;display:inline-block!important;box-sizing:border-box!important;vertical-align:top!important}
               .mcp-text{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
@@ -165,7 +164,7 @@ const Newsletter = () => {
         <Body
           style={{
             backgroundColor: "#F6F8FA",
-            fontFamily: "Geist, sans-serif",
+            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
           }}
         >
           <Container
@@ -297,7 +296,7 @@ const Newsletter = () => {
                               fontSize: "12px",
                               color: "#020304",
                               fontWeight: 500,
-                              fontFamily: "Geist, sans-serif",
+                              fontFamily: "inherit",
                             }}
                           >
                             {mcp.name}
@@ -598,7 +597,7 @@ const Newsletter = () => {
                                 fontSize: "10px",
                                 color: "#666666",
                                 margin: 0,
-                                fontFamily: "Geist Mono, monospace",
+                                fontFamily: "inherit",
                                 lineHeight: "16px",
                                 display: "block",
                                 overflow: "hidden",
@@ -680,7 +679,7 @@ const Newsletter = () => {
                                 fontSize: "10px",
                                 color: "#666666",
                                 margin: 0,
-                                fontFamily: "Geist Mono, monospace",
+                                fontFamily: "inherit",
                                 lineHeight: "16px",
                                 display: "block",
                                 overflow: "hidden",
@@ -788,7 +787,7 @@ const Newsletter = () => {
                               fontSize: "12px",
                               color: "#020304",
                               fontWeight: 500,
-                              fontFamily: "Geist, sans-serif",
+                              fontFamily: "inherit",
                             }}
                           >
                             {mcp.name}
@@ -934,7 +933,7 @@ const Newsletter = () => {
                       </td>
                       <td style={{ verticalAlign: "middle" }}>
                         <a
-                          href="https://github.com/pontusab/cursor.directory"
+                          href="https://github.com/pontusab/directories"
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
@@ -968,7 +967,7 @@ const Newsletter = () => {
                       margin: 0,
                     }}
                   >
-                    © 2025 Cursor Directory. Made for the developer community.
+                    © {new Date().getFullYear()} Cursor Directory. Made for the developer community.
                   </Text>
                 </Column>
               </Row>

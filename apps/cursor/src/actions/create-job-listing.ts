@@ -1,7 +1,7 @@
 "use server";
 
-import { createJobListingCheckoutSession } from "@/lib/polar";
 import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { authActionClient } from "./safe-action";
@@ -18,7 +18,6 @@ export const createJobListingAction = authActionClient
       description: z.string(),
       link: z.string().url(),
       workplace: z.enum(["On site", "Remote", "Hybrid"]),
-      plan: z.enum(["standard", "featured", "premium"]),
       experience: z.string().nullable(),
     }),
   )
@@ -32,11 +31,21 @@ export const createJobListingAction = authActionClient
         link,
         workplace,
         experience,
-        plan,
       },
-      ctx: { email, name },
+      ctx: { userId },
     }) => {
       const supabase = await createClient();
+
+      const { data: company } = await supabase
+        .from("companies")
+        .select("id")
+        .eq("id", company_id)
+        .eq("owner_id", userId)
+        .single();
+
+      if (!company) {
+        throw new Error("You don't have permission to create a job for this company");
+      }
 
       const { data, error } = await supabase
         .from("jobs")
@@ -48,7 +57,10 @@ export const createJobListingAction = authActionClient
           link,
           workplace,
           experience,
-          plan,
+          owner_id: userId,
+          plan: "standard",
+          active: true,
+          order: 0,
         })
         .select("id")
         .single();
@@ -57,14 +69,8 @@ export const createJobListingAction = authActionClient
         throw new Error(error.message);
       }
 
-      const session = await createJobListingCheckoutSession({
-        plan,
-        jobListingId: data.id,
-        companyId: company_id,
-        email: email ?? "",
-        customerName: name ?? "",
-      });
-
-      redirect(session.url);
+      revalidatePath("/");
+      revalidatePath("/jobs");
+      redirect("/jobs");
     },
   );

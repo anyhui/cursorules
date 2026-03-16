@@ -1,38 +1,20 @@
 "use client";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
 import { CommandMenu } from "./command-menu";
 import { MobileMenu } from "./mobile-menu";
-import { Button } from "./ui/button";
 import { UserMenu } from "./user-menu";
 
-const navigationLinks = [
+export const navigationLinks = [
   { href: "/plugins", label: "Plugins" },
-  { href: "/board", label: "Trending" },
+  { href: "/events", label: "Events" },
   { href: "/jobs", label: "Jobs" },
   { href: "/members", label: "Members" },
-  {
-    href: "https://cursor.com/learn?utm_source=cursor-directory&utm_medium=referral&utm_campaign=nav",
-    label: "Learn",
-    external: true,
-  },
-  { href: "/games", label: "Games" },
-  { href: "/about", label: "About" },
-  { href: "/companies", label: "Companies" },
-  { href: "/events", label: "Events" },
+  { href: "/board", label: "Board" },
 ] as const;
-
-const MAIN_NAV_COUNT = 5;
 
 export function Header({
   pluginItems,
@@ -42,71 +24,50 @@ export function Header({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const mainNavItems = navigationLinks.slice(0, MAIN_NAV_COUNT);
-  const dropdownNavItems = navigationLinks.slice(MAIN_NAV_COUNT);
+  const isActiveLink = (href: string) =>
+    pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <div className="flex justify-between items-center mt-2 md:mt-0">
-      <div className="md:fixed z-20 flex justify-between items-center top-0 px-6 py-2 w-full bg-background backdrop-filter backdrop-blur-sm bg-opacity-30">
-        <Link href="/" className="font-medium font-mono text-sm">
-          cursor.directory
-        </Link>
+    <div className="relative z-30 flex items-center justify-between">
+      <div className="fixed inset-x-0 top-0 bg-background/92 backdrop-blur-xl">
+        <div className="mx-auto flex h-[56px] w-full max-w-[1300px] items-center justify-between px-4 text-[15px] md:h-[60px] md:px-6">
+          <Link
+            href="/"
+            className="flex items-center text-foreground"
+          >
+            <img
+              src="/logo-lockup.svg"
+              alt="Cursor Directory"
+              className="h-[18px] w-auto dark:brightness-100 brightness-0"
+            />
+          </Link>
 
-        <div className="hidden md:flex items-center gap-5">
-          {mainNavItems.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              {...("external" in link && link.external
-                ? { target: "_blank", rel: "noopener noreferrer" }
-                : {})}
-              className={cn(
-                "flex items-center gap-2 text-sm font-medium",
-                !("external" in link) && pathname.includes(link.href)
-                  ? "text-primary"
-                  : "text-[#878787]",
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
+          <div className="md:hidden">
+            <MobileMenu />
+          </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="gap-2 hover:bg-transparent text-[#878787] px-0 focus-visible:ring-0"
+          <div className="hidden items-center gap-2 md:flex">
+            {navigationLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "chrome-label rounded-full px-3.5 py-2 font-medium transition-colors",
+                  isActiveLink(link.href)
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
-                More
-                <ChevronDownIcon className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {dropdownNavItems.map((link) => (
-                <DropdownMenuItem key={link.href} asChild>
-                  <Link
-                    href={link.href}
-                    className={cn(
-                      "flex items-center gap-2 text-sm font-medium",
-                      pathname.includes(link.href)
-                        ? "text-primary"
-                        : "text-[#878787]",
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {link.label}
+              </Link>
+            ))}
 
-          <Suspense fallback={null}>
-            <UserMenu />
-          </Suspense>
+            <Suspense fallback={null}>
+              <UserMenu />
+            </Suspense>
+          </div>
         </div>
       </div>
-      <MobileMenu />
       <CommandMenu open={open} setOpen={setOpen} items={pluginItems} />
     </div>
   );

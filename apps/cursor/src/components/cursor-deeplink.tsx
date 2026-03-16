@@ -10,12 +10,13 @@ export function CursorDeepLink({ mcp_link }: Props) {
   }
 
   return (
-    <a href={mcp_link} target="_blank" rel="noreferrer">
-      <img
-        src="https://cursor.com/deeplink/mcp-install-light.svg"
-        alt="Add  MCP server to Cursor"
-        height="32"
-      />
+    <a
+      href={mcp_link}
+      target="_blank"
+      rel="noreferrer"
+      className="rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+    >
+      Add to Cursor
     </a>
   );
 }

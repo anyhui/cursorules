@@ -1,5 +1,4 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 
 export type Company = {
@@ -12,30 +11,26 @@ export type Company = {
 
 export function CompanyCard({ company }: { company: Company }) {
   return (
-    <Card className="bg-transparent border-none pb-4 border-b-[1px] border-border">
-      <Link href={`/c/${company.slug}`}>
-        <CardHeader className="flex flex-row items-center gap-4 p-0">
-          <Avatar className="size-10 border border-border rounded-none">
-            <AvatarImage src={company.image} alt={company.name} />
-            <AvatarFallback className="text-sm font-mono rounded-none bg-transparent">
-              {company.name.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex flex-col">
-            <CardTitle className="text-sm font-normal mt-0">
-              {company.name}
-            </CardTitle>
-            <span className="text-xs text-[#878787] font-mono">
-              {company.location}
-            </span>
+    <Link
+      href={`/c/${company.slug}`}
+      className="group flex items-center gap-3 rounded-md border border-border bg-transparent p-3 transition-colors hover:border-input hover:bg-transparent"
+    >
+      <Avatar className="size-10 rounded-[6px] border border-border bg-muted">
+        <AvatarImage src={company.image} alt={company.name} />
+        <AvatarFallback className="rounded-[6px] bg-muted text-sm text-foreground">
+          {company.name.charAt(0)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <div className="truncate text-sm font-medium tracking-[0.005em] text-foreground">
+          {company.name}
+        </div>
+        {company.location && (
+          <div className="truncate text-[13px] text-muted-foreground">
+            {company.location}
           </div>
-
-          <div className="ml-auto text-xs text-[#878787] font-mono">
-            View Company
-          </div>
-        </CardHeader>
-      </Link>
-    </Card>
+        )}
+      </div>
+    </Link>
   );
 }

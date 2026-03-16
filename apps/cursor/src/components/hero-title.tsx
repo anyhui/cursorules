@@ -3,55 +3,34 @@
 import { formatNumber } from "@/utils/format";
 import Link from "next/link";
 
+const linkClass =
+  "border-b border-dashed border-input text-foreground";
+
 export function HeroTitle({ totalUsers }: { totalUsers: number }) {
-  const text = `Join the Cursor community with ${formatNumber(totalUsers)}+ members`;
-
   return (
-    <div className="text-center mb-8">
-      <Link href="/login">
-        <h1
-          className="text-[21px] mb-2"
-          style={{
-            opacity: 0,
-            animation: "fadeIn 0.2s ease forwards",
-          }}
-        >
-          {text}
-        </h1>
-      </Link>
+    <div className="mb-14 text-center">
+      <h1 className="marketing-hero-title mx-auto mb-5 max-w-[980px] text-balance text-foreground">
+        Explore what the community is building
+      </h1>
 
-      <p
-        className="text-[#878787] text-sm max-w-[620px] mx-auto"
-        style={{
-          opacity: 0,
-          animation: "fadeIn 0.2s ease forwards 0.1s",
-        }}
-      >
-        The home for Cursor enthusiasts where you can browse{" "}
-        <Link href="/plugins" className="border-b border-border border-dashed">
-          plugins
+      <p className="marketing-copy mx-auto max-w-[760px] text-balance">
+        <Link href="/plugins" className={linkClass}>
+          Plugins
         </Link>
         ,{" "}
-        <Link href="/generate" className="border-b border-border border-dashed">
-          generate
+        <Link href="/plugins?tag=mcp" className={linkClass}>
+          MCP servers
+        </Link>
+        ,{" "}
+        <Link href="/events" className={linkClass}>
+          events
+        </Link>
+        , and{" "}
+        <Link href="/members" className={linkClass}>
+          {formatNumber(totalUsers)}+ developers
         </Link>{" "}
-        rules, post and follow the latest news on the board, learn, connect, and
-        discover{" "}
-        <Link href="/jobs" className="border-b border-border border-dashed">
-          jobs
-        </Link>{" "}
-        all in one place.
+        building with Cursor.
       </p>
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 }

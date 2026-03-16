@@ -1,6 +1,7 @@
 "use client";
 
 import { useQueryState } from "nuqs";
+import { SearchField } from "./ui/search-field";
 
 export function RulesSearch() {
   const [search, setSearch] = useQueryState("q", { defaultValue: "" });
@@ -17,13 +18,12 @@ export function RulesSearch() {
   };
 
   return (
-    <div className="w-full max-w-[300px] border border-[#2C2C2] mt-6 hidden md:block">
+    <div className="mt-6 hidden w-full max-w-[320px] md:block">
       <form className="h-full w-full" onSubmit={handleSubmit}>
-        <input
+        <SearchField
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={setSearch}
           onKeyDown={handleKeyDown}
-          className="w-full text-[#585858] text-xs bg-transparent p-2 resize-none focus:outline-none placeholder:text-[#585858]"
           placeholder="Search rules..."
         />
       </form>

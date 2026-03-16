@@ -202,6 +202,7 @@ export function EditMCPForm({ data }: { data: MCPData }) {
 
         <Button
           type="submit"
+          size="lg"
           className="w-full"
           disabled={isExecuting || !form.formState.isDirty}
         >

@@ -1,11 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  outputFileTracingIncludes: {
-    "/plugins": ["../../plugins/**/*"],
-    "/plugins/[slug]": ["../../plugins/**/*"],
-    "/": ["../../plugins/**/*"],
-    "/sitemap.xml": ["../../plugins/**/*"],
-  },
   redirects: async () => {
     return [
       {
@@ -25,6 +19,16 @@ const nextConfig = {
       },
       {
         source: "/mcp",
+        destination: "/plugins",
+        permanent: true,
+      },
+      {
+        source: "/official/:path*",
+        destination: "/plugins",
+        permanent: true,
+      },
+      {
+        source: "/generate",
         destination: "/plugins",
         permanent: true,
       },
@@ -55,6 +59,9 @@ const nextConfig = {
       },
       {
         hostname: "assets.serverless-extras.com",
+      },
+      {
+        hostname: "images.lumacdn.com",
       },
     ],
   },

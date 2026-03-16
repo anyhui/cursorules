@@ -42,7 +42,7 @@ export function JobListingSwitch({ id, active }: JobListingSwitchProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-mono text-[#878787]">
+      <span className="text-xs font-mono text-muted-foreground">
         {optimisticState.active ? "Listing is visible" : "Listing is hidden"}
       </span>
       <Switch

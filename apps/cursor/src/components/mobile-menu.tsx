@@ -7,30 +7,14 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { navigationLinks } from "./header";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-
-const navigationLinks = [
-  { href: "/plugins", label: "Plugins" },
-  { href: "/board", label: "Trending" },
-  { href: "/jobs", label: "Jobs" },
-  { href: "/members", label: "Members" },
-  {
-    href: "https://cursor.com/learn?utm_source=cursor-directory&utm_medium=referral&utm_campaign=nav",
-    label: "Learn",
-    external: true,
-  },
-  { href: "/games", label: "Games" },
-  { href: "/about", label: "About" },
-  { href: "/companies", label: "Companies" },
-  { href: "/events", label: "Events" },
-] as const;
 
 type User = {
   id: string;
   slug: string;
   name?: string;
-  email?: string;
   image?: string;
 };
 
@@ -53,7 +37,7 @@ export function MobileMenu() {
 
       const { data } = await supabase
         .from("users")
-        .select("*")
+        .select("id, slug, name, image")
         .eq("id", session.data.session?.user?.id)
         .single();
 
@@ -92,7 +76,7 @@ export function MobileMenu() {
             onClick={() => setIsOpen(!isOpen)}
           >
             <AvatarImage src={user?.image} className="rounded-none" />
-            <AvatarFallback className="text-xs bg-[#878787]">
+              <AvatarFallback className="rounded-md bg-muted text-xs text-foreground">
               {user?.name?.charAt(0)}
             </AvatarFallback>
           </Avatar>
@@ -114,7 +98,7 @@ export function MobileMenu() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.1 }}
-            className="fixed inset-0 z-[99999] bg-background w-screen h-screen top-[50px] bottom-0 p-4"
+            className="fixed inset-x-0 bottom-0 top-16 z-[99999] w-screen bg-background/95 p-4 backdrop-blur-xl"
           >
             <div className="flex flex-col">
               {navigationLinks.map((link, index) => (
@@ -130,14 +114,11 @@ export function MobileMenu() {
                   <Link
                     href={link.href}
                     onClick={() => setIsOpen(false)}
-                    {...("external" in link && link.external
-                      ? { target: "_blank", rel: "noopener noreferrer" }
-                      : {})}
                     className={cn(
-                      "block py-5 text-sm font-medium",
-                      !("external" in link) && pathname === link.href
+                      "block rounded-md py-5 text-sm font-medium",
+                      pathname === link.href
                         ? "text-primary"
-                        : "text-[#878787]",
+                        : "text-muted-foreground",
                     )}
                   >
                     {link.label}
@@ -162,14 +143,14 @@ export function MobileMenu() {
                     >
                       <Button
                         variant="outline"
-                        className="h-8 rounded-full w-full mb-4 border-border"
+                        className="mb-4 h-9 w-full rounded-full"
                       >
                         Profile
                       </Button>
                     </Link>
                     <Button
-                      variant="outline"
-                      className="bg-white text-black h-8 rounded-full w-full"
+                      variant="default"
+                      className="h-9 w-full rounded-full"
                       onClick={handleSignOut}
                     >
                       Sign Out
@@ -178,8 +159,8 @@ export function MobileMenu() {
                 ) : (
                   <Link href="/login" onClick={() => setIsOpen(false)}>
                     <Button
-                      variant="outline"
-                      className="bg-white text-black h-8 rounded-full w-full"
+                      variant="default"
+                      className="h-9 w-full rounded-full"
                     >
                       Sign In
                     </Button>

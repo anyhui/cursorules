@@ -1,84 +1,53 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import type { Event } from "@/lib/luma";
+import { format } from "date-fns";
+import { CalendarDays, MapPin } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
-export function EventCard({
-  data: {
-    event,
-    // tags, // Assuming tags might be used later, commented out for now
-  },
-}: {
-  data: Event;
-}) {
-  // Assuming event.url exists, replace if the actual property name is different
-  const eventUrl = event.url || "#"; // Fallback URL
+export function EventCard({ data: { event } }: { data: Event }) {
+  const eventUrl = `${event.url}?utm_source=cursor.directory`;
+  const past = new Date(event.end_at) < new Date();
+  const location =
+    event.geo_address_json?.city || event.geo_address_json?.address;
 
   return (
-    <Card className="p-0 border-none bg-transparent">
-      <CardHeader className="p-0 space-y-2">
-        <div className="flex items-center gap-2 relative">
-          <Link href={eventUrl} passHref legacyBehavior>
-            <a target="_blank" rel="noopener noreferrer" href={eventUrl}>
-              <Avatar className="size-4 rounded-none">
-                {event.cover_url ? (
-                  <AvatarImage src={event.cover_url} alt={event.name} />
-                ) : (
-                  <AvatarFallback className="bg-accent text-[9px]">
-                    {event.name.charAt(0)}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-            </a>
-          </Link>
-          <div className="flex flex-row space-x-1 items-center">
-            <CardTitle className="text-xs text-[#878787] font-mono">
-              <Link href={eventUrl} passHref legacyBehavior>
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:underline"
-                  href={eventUrl}
-                >
-                  {event.name}
-                </a>
-              </Link>
-            </CardTitle>
-            <span className="text-xs text-[#878787] font-mono">•</span>
-            <span className="line-clamp-1 text-xs text-[#878787] font-mono">
-              {/* Format date/time as needed */}
-              {new Date(event.start_at).toLocaleString()}
-            </span>
-            {/* Remove conditional blocks for experience, location, workplace */}
-          </div>
-
-          <div className="absolute right-0 flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              className="w-fit bg-[#1c1c1c] text-[#878787] hover:bg-[#2c2c2c] rounded-full font-mono text-xs"
-              asChild
-            >
-              <a
-                href={`${eventUrl}?utm_source=cursor.directory&utm_medium=referral&utm_campaign=events-featured`} // Updated campaign name
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View
-              </a>
-            </Button>
-          </div>
+    <Link href={eventUrl} target="_blank" rel="noopener noreferrer">
+      <Card className="overflow-hidden border-border bg-transparent transition-colors hover:border-input hover:bg-transparent">
+        <div className="relative aspect-[2/1] w-full overflow-hidden bg-muted">
+          {event.cover_url ? (
+            <Image
+              src={event.cover_url}
+              alt={event.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 25vw"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-2xl font-medium text-muted-foreground">
+              {event.name.charAt(0)}
+            </div>
+          )}
+          {past && <div className="absolute inset-0 bg-black/40" />}
         </div>
 
-        {/* Removed the second CardTitle section which seemed redundant or leftover */}
-      </CardHeader>
+        <div className="flex h-[88px] flex-col gap-2 p-3">
+          <h3 className="line-clamp-2 text-sm font-medium tracking-[0.005em] text-foreground">
+            {event.name}
+          </h3>
 
-      <CardContent className="p-0 mt-2 pr-24">
-        <p className="text-sm line-clamp-2 text-[#878787]">
-          {event.description}
-        </p>
-      </CardContent>
-    </Card>
+          <div className="mt-auto flex flex-col gap-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <CalendarDays className="size-3 flex-shrink-0" />
+              {format(new Date(event.start_at), "MMM d, yyyy · h:mm a")}
+            </span>
+            <span className="flex items-center gap-1.5 truncate">
+              <MapPin className="size-3 flex-shrink-0" />
+              <span className="truncate">{location || "Online"}</span>
+            </span>
+          </div>
+        </div>
+      </Card>
+    </Link>
   );
 }

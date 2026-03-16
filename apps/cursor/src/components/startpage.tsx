@@ -3,11 +3,11 @@
 import type { PluginCardData } from "@/components/plugins/plugin-card";
 import { PluginCard } from "@/components/plugins/plugin-card";
 import Fuse from "fuse.js";
-import { motion } from "motion/react";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
 import { useMemo } from "react";
 import { BoardPost } from "./board/board-post";
+import { EventCard } from "./events/event-card";
 import { GlobalSearchInput } from "./global-search-input";
 import { HeroTitle } from "./hero-title";
 import { type Job, JobsFeatured } from "./jobs/jobs-featured";
@@ -18,18 +18,24 @@ function matchesSearch(term: string, ...fields: (string | undefined | null)[]) {
   return fields.some((f) => f?.toLowerCase().includes(lower));
 }
 
+import type { Event } from "@/lib/luma";
+
 export function Startpage({
   featuredPlugins,
+  popularPlugins,
   allPlugins,
   recentPlugins,
+  upcomingEvents,
   jobs,
   totalUsers,
   members,
   popularPosts,
 }: {
   featuredPlugins: PluginCardData[];
+  popularPlugins: PluginCardData[];
   allPlugins: PluginCardData[];
   recentPlugins: PluginCardData[];
+  upcomingEvents: Event[];
   jobs?: Job[] | null;
   totalUsers: number;
   members: unknown[] | null;
@@ -75,6 +81,18 @@ export function Startpage({
     );
   }, [search, isSearching, members]);
 
+  const filteredEvents = useMemo(() => {
+    if (!isSearching) return upcomingEvents;
+    return upcomingEvents.filter((e) =>
+      matchesSearch(
+        search,
+        e.event.name,
+        e.event.geo_address_json?.city,
+        e.event.geo_address_json?.country,
+      ),
+    );
+  }, [search, isSearching, upcomingEvents]);
+
   const filteredPosts = useMemo(() => {
     if (!isSearching) return popularPosts;
     return (popularPosts ?? []).filter((p: any) =>
@@ -83,24 +101,19 @@ export function Startpage({
   }, [search, isSearching, popularPosts]);
 
   return (
-    <div>
-      <div className="flex flex-col gap-4 w-full relative mx-auto h-screen">
-        <div className="transition-all duration-1000">
+    <div className="page-shell pb-24 pt-28 md:pt-36">
+      <div className="relative mx-auto flex w-full flex-col gap-6">
+        <div>
           <HeroTitle totalUsers={totalUsers} />
 
-          <div className="max-w-[620px] mx-auto w-full mb-14">
+          <div className="mx-auto mb-20 w-full max-w-[720px]">
             <GlobalSearchInput />
           </div>
 
           {filteredPlugins.length > 0 && (
-            <motion.div
-              className="mb-10"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-regular">
+            <div className="mb-14">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="section-eyebrow">
                   {isSearching ? "Plugins" : "Featured Plugins"}
                 </h3>
                 <Link
@@ -109,7 +122,7 @@ export function Startpage({
                       ? `/plugins?q=${encodeURIComponent(search)}`
                       : "/plugins"
                   }
-                  className="text-sm text-[#878787] flex items-center gap-1"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <span>{isSearching ? "See all results" : "View all"}</span>
                   <svg
@@ -132,7 +145,7 @@ export function Startpage({
                     <g mask="url(#mask0_106_981)">
                       <path
                         d="M3.2 9.5L2.5 8.8L7.3 4H3V3H9V9H8V4.7L3.2 9.5Z"
-                        fill="#878787"
+                        fill="currentColor"
                       />
                     </g>
                   </svg>
@@ -145,23 +158,16 @@ export function Startpage({
                     <PluginCard key={plugin.slug} plugin={plugin} />
                   ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
-          {filteredJobs && filteredJobs.length > 0 && (
-            <motion.div
-              className="mb-10"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-regular">
-                  {isSearching ? "Jobs" : "Featured jobs"}
-                </h3>
+          {popularPlugins.length > 0 && !isSearching && (
+            <div className="mb-14">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="section-eyebrow">Popular Plugins</h3>
                 <Link
-                  href="/jobs"
-                  className="text-sm text-[#878787] flex items-center gap-1"
+                  href="/plugins?tag=popular"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <span>View all</span>
                   <svg
@@ -184,30 +190,121 @@ export function Startpage({
                     <g mask="url(#mask0_106_981)">
                       <path
                         d="M3.2 9.5L2.5 8.8L7.3 4H3V3H9V9H8V4.7L3.2 9.5Z"
-                        fill="#878787"
+                        fill="currentColor"
+                      />
+                    </g>
+                  </svg>
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {popularPlugins.map((plugin) => (
+                  <PluginCard key={plugin.slug} plugin={plugin} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {filteredEvents.length > 0 && (
+            <div className="mb-14">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="section-eyebrow">
+                  {isSearching ? "Events" : "Upcoming Events"}
+                </h3>
+                <Link
+                  href={
+                    isSearching
+                      ? `/events?q=${encodeURIComponent(search)}`
+                      : "/events"
+                  }
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <span>{isSearching ? "See all results" : "View all"}</span>
+                  <svg
+                    width="12"
+                    height="13"
+                    viewBox="0 0 12 13"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <mask
+                      id="mask0_106_981"
+                      maskUnits="userSpaceOnUse"
+                      x="0"
+                      y="0"
+                      width="12"
+                      height="13"
+                    >
+                      <rect y="0.5" width="12" height="12" fill="#D9D9D9" />
+                    </mask>
+                    <g mask="url(#mask0_106_981)">
+                      <path
+                        d="M3.2 9.5L2.5 8.8L7.3 4H3V3H9V9H8V4.7L3.2 9.5Z"
+                        fill="currentColor"
+                      />
+                    </g>
+                  </svg>
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {filteredEvents
+                  .slice(0, isSearching ? 8 : 4)
+                  .map((event) => (
+                    <EventCard key={event.api_id} data={event} />
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {filteredJobs && filteredJobs.length > 0 && (
+            <div className="mb-14">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="section-eyebrow">
+                  {isSearching ? "Jobs" : "Featured jobs"}
+                </h3>
+                <Link
+                  href="/jobs"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <span>View all</span>
+                  <svg
+                    width="12"
+                    height="13"
+                    viewBox="0 0 12 13"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <mask
+                      id="mask0_106_981"
+                      maskUnits="userSpaceOnUse"
+                      x="0"
+                      y="0"
+                      width="12"
+                      height="13"
+                    >
+                      <rect y="0.5" width="12" height="12" fill="#D9D9D9" />
+                    </mask>
+                    <g mask="url(#mask0_106_981)">
+                      <path
+                        d="M3.2 9.5L2.5 8.8L7.3 4H3V3H9V9H8V4.7L3.2 9.5Z"
+                        fill="currentColor"
                       />
                     </g>
                   </svg>
                 </Link>
               </div>
               <JobsFeatured data={filteredJobs} hidePagination={true} />
-            </motion.div>
+            </div>
           )}
 
           {filteredMembers && filteredMembers.length > 0 && (
-            <motion.div
-              className="mb-10"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.45 }}
-            >
-              <div className="flex justify-between items-center mb-4">
+            <div className="mb-14">
+              <div className="mb-5 flex items-center justify-between">
                 <Link href="/members">
-                  <h3 className="text-base font-regular">Members</h3>
+                  <h3 className="section-eyebrow">Members</h3>
                 </Link>
                 <Link
                   href="/members"
-                  className="text-sm text-[#878787] flex items-center gap-1"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <span>View all</span>
                   <svg
@@ -230,7 +327,7 @@ export function Startpage({
                     <g mask="url(#mask0_106_981)">
                       <path
                         d="M3.2 9.5L2.5 8.8L7.3 4H3V3H9V9H8V4.7L3.2 9.5Z"
-                        fill="#878787"
+                        fill="currentColor"
                       />
                     </g>
                   </svg>
@@ -243,25 +340,20 @@ export function Startpage({
                   <MembersCard key={member.id} member={member} gray />
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {filteredPosts && filteredPosts.length > 0 && !isSearching && (
-            <motion.div
-              className="mb-10"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.45 }}
-            >
-              <div className="flex justify-between items-center mb-4">
+            <div className="mb-14">
+              <div className="mb-5 flex items-center justify-between">
                 <Link href="/board">
-                  <h3 className="text-base font-regular">
+                  <h3 className="section-eyebrow">
                     Trending in Cursor
                   </h3>
                 </Link>
                 <Link
                   href="/board"
-                  className="text-sm text-[#878787] flex items-center gap-1"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <span>View all</span>
                   <svg
@@ -284,7 +376,7 @@ export function Startpage({
                     <g mask="url(#mask0_106_981)">
                       <path
                         d="M3.2 9.5L2.5 8.8L7.3 4H3V3H9V9H8V4.7L3.2 9.5Z"
-                        fill="#878787"
+                        fill="currentColor"
                       />
                     </g>
                   </svg>
@@ -296,21 +388,16 @@ export function Startpage({
                   <BoardPost key={post.post_id} {...post} />
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {recentPlugins.length > 0 && !isSearching && (
-            <motion.div
-              className="mb-10"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.5 }}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-base font-regular">Recent Plugins</h3>
+            <div className="mb-14">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="section-eyebrow">Recent Plugins</h3>
                 <Link
                   href="/plugins"
-                  className="text-sm text-[#878787] flex items-center gap-1"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
                   <span>View all</span>
                   <svg
@@ -333,7 +420,7 @@ export function Startpage({
                     <g mask="url(#mask0_106_981)">
                       <path
                         d="M3.2 9.5L2.5 8.8L7.3 4H3V3H9V9H8V4.7L3.2 9.5Z"
-                        fill="#878787"
+                        fill="currentColor"
                       />
                     </g>
                   </svg>
@@ -344,20 +431,21 @@ export function Startpage({
                   <PluginCard key={plugin.slug} plugin={plugin} />
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
 
           {isSearching &&
             filteredPlugins.length === 0 &&
+            filteredEvents.length === 0 &&
             (!filteredJobs || filteredJobs.length === 0) &&
             (!filteredMembers || filteredMembers.length === 0) && (
               <div className="flex flex-col items-center mt-16">
-                <p className="text-sm text-[#878787]">
+                <p className="text-sm text-muted-foreground">
                   No results found for &quot;{search}&quot;
                 </p>
                 <Link
                   href={`/plugins?q=${encodeURIComponent(search)}`}
-                  className="text-sm text-[#878787] mt-2 border-b border-border border-dashed"
+                  className="mt-2 border-b border-dashed border-input text-sm text-muted-foreground hover:text-foreground"
                 >
                   Search all plugins
                 </Link>

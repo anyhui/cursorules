@@ -136,7 +136,9 @@ export function SaveRuleButton({
                 </FormItem>
               )}
             />
-            <Button type="submit">Save</Button>
+            <Button type="submit" size="lg" className="w-full">
+              Save
+            </Button>
           </form>
         </Form>
       </DialogContent>

@@ -1,18 +1,17 @@
 import { EditMCPForm } from "@/components/forms/edit-mcp";
-import { GithubSignin } from "@/components/github-signin";
-import { GoogleSignin } from "@/components/google-signin";
+import { Login } from "@/components/login";
 import { MCPListingSwitch } from "@/components/mcps/mcps-listing-switch";
 import { getMCPBySlug } from "@/data/queries";
 import { getSession } from "@/utils/supabase/auth";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 type Params = Promise<{ slug: string }>;
 
 export const metadata: Metadata = {
   title: "Edit MCP | Cursor Directory",
-  description:
-    "Edit a MCP on Cursor Directory and reach 300k+ developers today.",
+  description: "Edit your MCP server on Cursor Directory.",
 };
 
 export default async function Page({ params }: { params: Params }) {
@@ -22,19 +21,11 @@ export default async function Page({ params }: { params: Params }) {
 
   if (!session) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 w-full max-w-sm mx-auto">
-        <div className="max-w-md w-full text-center -mt-32">
-          <p className="text-md mt-4">
-            Sign in to edit a MCP <br />
-            and reach 300k+ developers today.
-          </p>
-
-          <div className="mt-10 flex flex-col gap-4">
-            <div className="flex flex-col gap-4">
-              <GithubSignin redirectTo={`/mcp/${slug}/edit`} />
-              <GoogleSignin redirectTo={`/mcp/${slug}/edit`} />
-            </div>
-          </div>
+      <div className="flex min-h-[70vh] items-center justify-center px-4">
+        <div className="w-full max-w-sm text-center">
+          <Suspense fallback={null}>
+            <Login redirectTo={`/mcp/${slug}/edit`} />
+          </Suspense>
         </div>
       </div>
     );
@@ -45,13 +36,15 @@ export default async function Page({ params }: { params: Params }) {
   }
 
   return (
-    <div className="mx-auto max-w-screen-sm xl:max-w-screen-sm border-t border-border pt-32 pb-16">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl mb-4">Edit MCP </h1>
-        <MCPListingSwitch id={mcp.id} active={mcp.active} />
-      </div>
+    <div className="page-shell pb-16 pt-24 md:pt-32">
+      <div className="mx-auto max-w-screen-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h1 className="marketing-page-title">Edit MCP</h1>
+          <MCPListingSwitch id={mcp.id} active={mcp.active} />
+        </div>
 
-      <EditMCPForm data={mcp} />
+        <EditMCPForm data={mcp} />
+      </div>
     </div>
   );
 }

@@ -1,10 +1,17 @@
 import { Login } from "@/components/login";
+import type { Metadata } from "next";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Sign in | Cursor Directory",
+  description:
+    "Sign in to Cursor Directory to submit plugins, star your favorites, and connect with the community.",
+};
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 w-full max-w-sm mx-auto">
-      <div className="max-w-md w-full text-center -mt-32">
+    <div className="flex min-h-[70vh] items-center justify-center px-4">
+      <div className="w-full max-w-sm text-center">
         <Suspense fallback={null}>
           <Login />
         </Suspense>

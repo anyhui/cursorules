@@ -1,5 +1,7 @@
 import { Company } from "@/components/company";
+import { CompanySkeleton } from "@/components/company/company-skeleton";
 import { getCompanyProfile } from "@/data/queries";
+import { Suspense } from "react";
 
 type Params = Promise<{ slug: string }>;
 
@@ -17,8 +19,10 @@ export default async function Page({ params }: { params: Params }) {
   const { slug } = await params;
 
   return (
-    <div className="flex mx-auto max-w-4xl min-h-screen w-full md:mt-28 mt-14 px-6 lg:px-0">
-      <Company slug={slug} />
+    <div className="page-shell max-w-4xl min-h-screen pb-32 pt-24 md:pt-32">
+      <Suspense fallback={<CompanySkeleton />}>
+        <Company slug={slug} />
+      </Suspense>
     </div>
   );
 }

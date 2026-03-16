@@ -2,51 +2,42 @@ import { Column, Img, Link, Row, Section, Text } from "@react-email/components";
 
 export function Footer() {
   return (
-    <Section>
-      <Img
-        src="https://languine.ai/email/separator.png"
-        alt="Separator"
-        width="100%"
-        className="mb-12"
-      />
+    <Section className="mt-8 px-8">
+      <Section className="border-t border-[#e5e7eb] pt-6">
+        <Row align="left" width="auto">
+          <Column className="align-middle pr-4">
+            <Link
+              href="https://x.com/cursordirectory"
+              className="text-black no-underline"
+            >
+              <Img
+                src="https://pub-abe1cd4008f5412abb77357f87d7d7bb.r2.dev/email/x.png"
+                alt="X"
+                width={18}
+                height={18}
+              />
+            </Link>
+          </Column>
 
-      <Text className="text-xs leading-6 mb-4 text-left font-mono">
-        Cursor Directory - the home for everything Cursor
-      </Text>
+          <Column className="align-middle">
+            <Link
+              href="https://github.com/pontusab/directories"
+              className="text-black no-underline"
+            >
+              <Img
+                src="https://pub-abe1cd4008f5412abb77357f87d7d7bb.r2.dev/email/github.png"
+                alt="GitHub"
+                width={18}
+                height={18}
+              />
+            </Link>
+          </Column>
+        </Row>
 
-      <Row className="mt-8" align="left" width="auto">
-        <Column className="align-middle pr-6">
-          <Link
-            href="https://twitter.com/cursordirectory"
-            className="text-black no-underline text-xl"
-          >
-            <Img
-              src="https://languine.ai/email/x.png"
-              alt="X"
-              width={22}
-              height={22}
-            />
-          </Link>
-        </Column>
-
-        <Column className="align-middle">
-          <Link
-            href="https://github.com/pontusab/directories"
-            className="text-black no-underline text-xl"
-          >
-            <Img
-              src="https://languine.ai/email/github.png"
-              alt="GitHub"
-              width={22}
-              height={22}
-            />
-          </Link>
-        </Column>
-      </Row>
-      <Section className="mt-8 flex gap-3">
-        <Text className="text-xs leading-6 mb-4 text-left font-mono text-[#B8B8B8]">
+        <Text className="text-xs leading-6 mt-4 text-[#999]">
           © {new Date().getFullYear()} Cursor Directory. All rights reserved.
-          This email was sent to you because you signed up for Cursor Directory.
+          <br />
+          This email was sent because you signed up for Cursor Directory.
         </Text>
       </Section>
     </Section>

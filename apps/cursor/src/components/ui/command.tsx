@@ -26,7 +26,7 @@ Command.displayName = CommandPrimitive.displayName;
 const CommandDialog = ({ children, ...props }: DialogProps) => {
   return (
     <Dialog {...props}>
-      <DialogContent className="overflow-hidden p-0 shadow-lg backdrop-blur-sm bg-popover/80">
+      <DialogContent className="overflow-hidden border-border bg-popover/90 p-0 shadow-cursor-md backdrop-blur-sm">
         <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
           {children}
         </Command>
@@ -39,15 +39,18 @@ const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
-  <div className="flex items-center border-b px-3" cmdk-input-wrapper="">
+  <div className="border-b border-border px-3 py-3" cmdk-input-wrapper="">
+    <div className="flex items-center overflow-hidden rounded-full border border-border bg-card px-4">
+      <Search className="size-3.5 shrink-0 text-text-quaternary" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-[#878787] disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-11 w-full bg-transparent px-3 text-sm tracking-[0.005em] outline-none placeholder:text-text-quaternary disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
     />
+    </div>
   </div>
 ));
 

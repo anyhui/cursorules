@@ -119,6 +119,7 @@ export function PostForm({ onSuccess }: { onSuccess: () => void }) {
         />
         <Button
           type="submit"
+          size="lg"
           className="w-full"
           disabled={createPost.isExecuting}
         >
