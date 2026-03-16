@@ -8,7 +8,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 import { getPlugins } from "@/data/queries";
 import { OpenPanelComponent } from "@openpanel/nextjs";
-import { GeistMono } from "geist/font/mono";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -87,7 +86,7 @@ export default async function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={cn(
-        `${cursorGothic.variable} ${GeistMono.variable}`,
+        `${cursorGothic.variable}`,
         "whitespace-pre-line antialiased",
       )}
     >
