@@ -485,6 +485,76 @@ export async function hasUserStarredPlugin(pluginId: string, userId: string) {
   return !!data;
 }
 
+export type ForumPost = {
+  id: number;
+  title: string;
+  slug: string;
+  url: string;
+  views: number;
+  likeCount: number;
+  postsCount: number;
+  createdAt: string;
+  excerpt: string | null;
+  tags: string[];
+  author: {
+    username: string;
+    name: string | null;
+    avatarUrl: string | null;
+  } | null;
+};
+
+export async function getForumPosts(): Promise<{ data: ForumPost[] }> {
+  try {
+    const res = await fetch("https://forum.cursor.com/top/weekly.json", {
+      next: { revalidate: 86400 },
+    });
+
+    if (!res.ok) return { data: [] };
+
+    const json = await res.json();
+    const topics = json.topic_list?.topics ?? [];
+    const users: Record<number, { username: string; name: string; avatar_template: string }> = {};
+
+    for (const u of json.users ?? []) {
+      users[u.id] = u;
+    }
+
+    const posts: ForumPost[] = topics
+      .filter((t: any) => !t.pinned && !t.pinned_globally)
+      .slice(0, 8)
+      .map((t: any) => {
+        const posterId = t.posters?.[0]?.user_id;
+        const user = posterId != null ? users[posterId] : null;
+        let avatarUrl: string | null = null;
+
+        if (user?.avatar_template) {
+          const tpl = user.avatar_template.replace("{size}", "48");
+          avatarUrl = tpl.startsWith("http") ? tpl : `https://forum.cursor.com${tpl}`;
+        }
+
+        return {
+          id: t.id,
+          title: t.title,
+          slug: t.slug,
+          url: `https://forum.cursor.com/t/${t.slug}/${t.id}`,
+          views: t.views ?? 0,
+          likeCount: t.like_count ?? 0,
+          postsCount: t.posts_count ?? 0,
+          createdAt: t.created_at,
+          excerpt: t.excerpt ?? null,
+          tags: (t.tags ?? []).map((tag: any) => (typeof tag === "string" ? tag : tag.name)),
+          author: user
+            ? { username: user.username, name: user.name || null, avatarUrl }
+            : null,
+        };
+      });
+
+    return { data: posts };
+  } catch {
+    return { data: [] };
+  }
+}
+
 type GetMembersParams = {
   page?: number;
   limit?: number;

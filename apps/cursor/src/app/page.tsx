@@ -3,6 +3,7 @@ import { Startpage } from "@/components/startpage";
 import {
   getFeaturedJobs,
   getFeaturedPlugins,
+  getForumPosts,
   getMembers,
   getPlugins,
   getPopularPosts,
@@ -54,6 +55,7 @@ export default async function Page() {
     { data: popularPosts },
     { data: allPluginsData },
     { entries: eventsData },
+    { data: forumPosts },
   ] = await Promise.all([
     getFeaturedJobs({ onlyPremium: true }),
     getFeaturedPlugins({ onlyPremium: true }),
@@ -62,6 +64,7 @@ export default async function Page() {
     getPopularPosts(),
     getPlugins({ fetchAll: true }),
     getEvents(),
+    getForumPosts(),
   ]);
 
   const featuredPlugins = (featuredPluginsData ?? []).slice(0, 8).map(toPluginCard);
@@ -108,6 +111,7 @@ export default async function Page() {
             totalUsers={totalUsers?.count ?? 0}
             members={members}
             popularPosts={popularPosts}
+            forumPosts={forumPosts}
           />
         </Suspense>
       </div>

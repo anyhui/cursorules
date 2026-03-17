@@ -6,8 +6,10 @@ import Fuse from "fuse.js";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
+import type { ForumPost as ForumPostType } from "@/data/queries";
 import { BoardPost } from "./board/board-post";
 import { EventCard } from "./events/event-card";
+import { ForumPost } from "./forum/forum-post";
 import { GlobalSearchInput } from "./global-search-input";
 import { HeroTitle } from "./hero-title";
 import { type Job, JobsFeatured } from "./jobs/jobs-featured";
@@ -30,6 +32,7 @@ export function Startpage({
   totalUsers,
   members,
   popularPosts,
+  forumPosts,
 }: {
   featuredPlugins: PluginCardData[];
   popularPlugins: PluginCardData[];
@@ -40,6 +43,7 @@ export function Startpage({
   totalUsers: number;
   members: unknown[] | null;
   popularPosts: unknown[] | null;
+  forumPosts: ForumPostType[];
 }) {
   const [search] = useQueryState("q", { defaultValue: "" });
 
@@ -411,6 +415,51 @@ export function Startpage({
                 {filteredPosts.slice(0, 3).map((post) => (
                   // @ts-ignore
                   <BoardPost key={post.post_id} {...post} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {forumPosts.length > 0 && !isSearching && (
+            <div className="mb-14">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="section-eyebrow">From the Forum</h3>
+                <a
+                  href="https://forum.cursor.com?utm_source=cursor.directory&utm_medium=startpage"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <span>View all</span>
+                  <svg
+                    width="12"
+                    height="13"
+                    viewBox="0 0 12 13"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <mask
+                      id="mask0_106_981"
+                      maskUnits="userSpaceOnUse"
+                      x="0"
+                      y="0"
+                      width="12"
+                      height="13"
+                    >
+                      <rect y="0.5" width="12" height="12" fill="#D9D9D9" />
+                    </mask>
+                    <g mask="url(#mask0_106_981)">
+                      <path
+                        d="M3.2 9.5L2.5 8.8L7.3 4H3V3H9V9H8V4.7L3.2 9.5Z"
+                        fill="currentColor"
+                      />
+                    </g>
+                  </svg>
+                </a>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {forumPosts.slice(0, 8).map((post) => (
+                  <ForumPost key={post.id} post={post} />
                 ))}
               </div>
             </div>
