@@ -4,10 +4,9 @@ import { starPluginAction } from "@/actions/star-plugin";
 import { cn, formatCount } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { Star } from "lucide-react";
-import { useAction } from "next-safe-action/hooks";
-import { useEffect, useState, useTransition } from "react";
+import { useOptimisticAction } from "next-safe-action/hooks";
+import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
-
 
 export function StarButton({
   pluginId,
@@ -19,8 +18,7 @@ export function StarButton({
   starCount: number;
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [starred, setStarred] = useState(false);
-  const [count, setCount] = useState(starCount);
+  const [initialStarred, setInitialStarred] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -38,19 +36,19 @@ export function StarButton({
         .eq("user_id", session.user.id)
         .maybeSingle()
         .then(({ data }) => {
-          setStarred(!!data);
+          setInitialStarred(!!data);
           setLoaded(true);
         });
     });
   }, [pluginId]);
 
-  const { execute } = useAction(starPluginAction, {
-    onSuccess: () => {
-      setStarred((prev) => !prev);
-      setCount((prev) => (starred ? prev - 1 : prev + 1));
-    },
+  const { execute, optimisticState } = useOptimisticAction(starPluginAction, {
+    currentState: { starred: initialStarred, count: starCount },
+    updateFn: (state) => ({
+      starred: !state.starred,
+      count: state.starred ? state.count - 1 : state.count + 1,
+    }),
   });
-  const [isPending, startTransition] = useTransition();
 
   if (!loaded) {
     return (
@@ -70,7 +68,7 @@ export function StarButton({
     return (
       <div className="flex items-center gap-1.5 text-muted-foreground">
         <Star className="size-3.5" />
-        <span className="text-xs">{formatCount(count)}</span>
+        <span className="text-xs">{formatCount(starCount)}</span>
       </div>
     );
   }
@@ -81,17 +79,17 @@ export function StarButton({
       size="sm"
       className={cn(
         "gap-1.5 rounded-full border-border bg-card",
-        starred && "text-yellow-500",
+        optimisticState.starred && "text-yellow-500",
       )}
-      disabled={isPending}
-      onClick={() => {
-        startTransition(() => {
-          execute({ pluginId, slug });
-        });
-      }}
+      onClick={() => execute({ pluginId, slug })}
     >
-      <Star className={cn("size-3.5", starred && "fill-yellow-500")} />
-      <span className="text-xs">{formatCount(count)}</span>
+      <Star
+        className={cn(
+          "size-3.5",
+          optimisticState.starred && "fill-yellow-500",
+        )}
+      />
+      <span className="text-xs">{formatCount(optimisticState.count)}</span>
     </Button>
   );
 }
