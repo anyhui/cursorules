@@ -4,8 +4,9 @@ import { starPluginAction } from "@/actions/star-plugin";
 import { cn, formatCount } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { Star } from "lucide-react";
-import { useOptimisticAction } from "next-safe-action/hooks";
-import { useEffect, useState } from "react";
+import { useAction } from "next-safe-action/hooks";
+import { useEffect, useRef, useState } from "react";
+import { SignInModal } from "../modals/sign-in-modal";
 import { Button } from "../ui/button";
 
 export function StarButton({
@@ -18,8 +19,11 @@ export function StarButton({
   starCount: number;
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [initialStarred, setInitialStarred] = useState(false);
+  const [starred, setStarred] = useState(false);
+  const [count, setCount] = useState(starCount);
   const [loaded, setLoaded] = useState(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const prevRef = useRef({ starred: false, count: starCount });
 
   useEffect(() => {
     const supabase = createClient();
@@ -36,19 +40,32 @@ export function StarButton({
         .eq("user_id", session.user.id)
         .maybeSingle()
         .then(({ data }) => {
-          setInitialStarred(!!data);
+          const isStarred = !!data;
+          setStarred(isStarred);
+          prevRef.current = { starred: isStarred, count: starCount };
           setLoaded(true);
         });
     });
-  }, [pluginId]);
+  }, [pluginId, starCount]);
 
-  const { execute, optimisticState } = useOptimisticAction(starPluginAction, {
-    currentState: { starred: initialStarred, count: starCount },
-    updateFn: (state) => ({
-      starred: !state.starred,
-      count: state.starred ? state.count - 1 : state.count + 1,
-    }),
+  const { execute } = useAction(starPluginAction, {
+    onError: () => {
+      setStarred(prevRef.current.starred);
+      setCount(prevRef.current.count);
+    },
   });
+
+  const handleClick = () => {
+    if (!isAuthenticated) {
+      setIsSignInModalOpen(true);
+      return;
+    }
+
+    prevRef.current = { starred, count };
+    setStarred(!starred);
+    setCount(starred ? count - 1 : count + 1);
+    execute({ pluginId, slug });
+  };
 
   if (!loaded) {
     return (
@@ -64,32 +81,28 @@ export function StarButton({
     );
   }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        <Star className="size-3.5" />
-        <span className="text-xs">{formatCount(starCount)}</span>
-      </div>
-    );
-  }
-
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      className={cn(
-        "gap-1.5 rounded-full border-border bg-card",
-        optimisticState.starred && "text-yellow-500",
-      )}
-      onClick={() => execute({ pluginId, slug })}
-    >
-      <Star
+    <>
+      <Button
+        variant="outline"
+        size="sm"
         className={cn(
-          "size-3.5",
-          optimisticState.starred && "fill-yellow-500",
+          "gap-1.5 rounded-full border-border bg-card",
+          starred && "text-yellow-500",
         )}
+        onClick={handleClick}
+      >
+        <Star
+          className={cn("size-3.5", starred && "fill-yellow-500")}
+        />
+        <span className="text-xs">{formatCount(count)}</span>
+      </Button>
+
+      <SignInModal
+        isOpen={isSignInModalOpen}
+        setIsOpen={setIsSignInModalOpen}
+        redirectTo={`/plugins/${slug}`}
       />
-      <span className="text-xs">{formatCount(optimisticState.count)}</span>
-    </Button>
+    </>
   );
 }
