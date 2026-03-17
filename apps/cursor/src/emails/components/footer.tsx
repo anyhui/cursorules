@@ -21,7 +21,7 @@ export function Footer() {
 
           <Column className="align-middle">
             <Link
-              href="https://github.com/pontusab/directories"
+              href="https://github.com/leerob/directories"
               className="text-black no-underline"
             >
               <Img

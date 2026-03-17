@@ -21,7 +21,7 @@ export default function WelcomeEmail({
     <Html>
       <Head />
       <Preview>
-        Welcome to the Cursor Directory community
+        Welcome to Cursor Directory — plugins, MCP servers, and resources for Cursor
       </Preview>
       <Tailwind>
         <Body style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif', backgroundColor: '#f6f8fa' }}>
@@ -32,14 +32,12 @@ export default function WelcomeEmail({
               <Text className="text-sm leading-7 mb-4">Hi {name},</Text>
 
               <Text className="text-sm leading-7 mb-4">
-                Welcome to Cursor Directory — the community hub for developers
-                building with Cursor. Whether you&apos;re here to discover new
-                tools, share your work, or connect with other developers,
-                you&apos;re in the right place.
+                Welcome to Cursor Directory — the place to find and share
+                plugins, MCP servers, rules, and other good stuff for Cursor.
               </Text>
 
               <Text className="text-sm leading-7 mb-2">
-                Here&apos;s what you can explore:
+                A few things worth checking out:
               </Text>
 
               <Text className="text-sm leading-7 mb-1">
@@ -50,7 +48,18 @@ export default function WelcomeEmail({
                 >
                   Plugins
                 </Link>{" "}
-                — Browse and install community-built plugins for Cursor
+                — Rules, MCP servers, skills, and more you can install in one click
+              </Text>
+
+              <Text className="text-sm leading-7 mb-1">
+                <span className="text-base">◇ </span>
+                <Link
+                  href="https://cursor.directory/plugins/new"
+                  className="underline text-black"
+                >
+                  Submit a Plugin
+                </Link>{" "}
+                — Got something cool? Share it
               </Text>
 
               <Text className="text-sm leading-7 mb-1">
@@ -61,7 +70,7 @@ export default function WelcomeEmail({
                 >
                   Events
                 </Link>{" "}
-                — Find meetups and events happening in the Cursor community
+                — Meetups and events happening around the community
               </Text>
 
               <Text className="text-sm leading-7 mb-1">
@@ -72,10 +81,10 @@ export default function WelcomeEmail({
                 >
                   Jobs
                 </Link>{" "}
-                — Discover opportunities at companies using Cursor
+                — Companies using Cursor that are hiring
               </Text>
 
-              <Text className="text-sm leading-7 mb-1">
+              <Text className="text-sm leading-7 mb-4">
                 <span className="text-base">◇ </span>
                 <Link
                   href="https://cursor.directory/members"
@@ -83,22 +92,11 @@ export default function WelcomeEmail({
                 >
                   Members
                 </Link>{" "}
-                — Connect with developers and companies in the community
-              </Text>
-
-              <Text className="text-sm leading-7 mb-4">
-                <span className="text-base">◇ </span>
-                <Link
-                  href="https://cursor.directory/board"
-                  className="underline text-black"
-                >
-                  Board
-                </Link>{" "}
-                — Share ideas, ask questions, and join the conversation
+                — Developers and companies in the community
               </Text>
 
               <Text className="text-sm leading-7 mb-6">
-                Start exploring:{" "}
+                Jump in:{" "}
                 <Link
                   href="https://cursor.directory"
                   className="underline text-black"
@@ -108,25 +106,7 @@ export default function WelcomeEmail({
               </Text>
 
               <Text className="text-sm leading-7">
-                Looking forward to seeing what you build!
-              </Text>
-
-              <Text className="text-sm leading-7 mt-2">
-                Best,
-                <br />
-                <Link
-                  href="https://twitter.com/pontusab"
-                  className="text-black text-sm underline"
-                >
-                  @Pontus
-                </Link>{" "}
-                &{" "}
-                <Link
-                  href="https://twitter.com/viktorhofte"
-                  className="text-black text-sm underline"
-                >
-                  @Viktor
-                </Link>
+                Happy building!
               </Text>
             </Section>
 
