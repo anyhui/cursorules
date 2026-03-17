@@ -457,6 +457,26 @@ export function Startpage({
                   </svg>
                 </a>
               </div>
+              <div className="flex flex-wrap gap-2 mb-5">
+                {[
+                  { label: "Discussions", href: "https://forum.cursor.com/c/general/4" },
+                  { label: "Guides", href: "https://forum.cursor.com/c/guides/20" },
+                  { label: "Showcase", href: "https://forum.cursor.com/c/showcase/9" },
+                  { label: "Ideas", href: "https://forum.cursor.com/c/ideas/22" },
+                  { label: "Announcements", href: "https://forum.cursor.com/c/announcements/11" },
+                ].map((cat) => (
+                  <a
+                    key={cat.label}
+                    href={`${cat.href}?utm_source=cursor.directory&utm_medium=startpage`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-mono text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {cat.label}
+                  </a>
+                ))}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {forumPosts.slice(0, 8).map((post) => (
                   <ForumPost key={post.id} post={post} />
