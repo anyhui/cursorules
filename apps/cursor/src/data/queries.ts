@@ -459,6 +459,20 @@ export async function getPendingPlugins({
   return { data: data as PluginRow[] | null, error };
 }
 
+export async function getStarredPlugins(userId: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("plugin_stars")
+    .select("plugin:plugin_id(*, plugin_components(*))")
+    .eq("user_id", userId);
+
+  const plugins = (data ?? [])
+    .map((row: any) => row.plugin)
+    .filter(Boolean) as PluginRow[];
+
+  return { data: plugins, error };
+}
+
 export async function hasUserStarredPlugin(pluginId: string, userId: string) {
   const supabase = await createClient();
   const { data } = await supabase

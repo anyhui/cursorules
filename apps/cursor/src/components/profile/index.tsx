@@ -2,12 +2,12 @@ import { getUserProfile } from "@/data/queries";
 import { getSession } from "@/utils/supabase/auth";
 import { format } from "date-fns";
 import { Suspense } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { ProfileCompanies } from "./profile-companies";
 import { ProfileContent } from "./profile-content";
-
 import { ProfilePlugins } from "./profile-plugins";
 import { ProfilePosts } from "./profile-posts";
+import { ProfileStarredPlugins } from "./profile-starred-plugins";
+import { ProfileTabs } from "./profile-tabs";
 import { ProfileTop } from "./profile-top";
 
 export async function Profile({
@@ -44,36 +44,29 @@ export async function Profile({
         social_x_link={data?.social_x_link}
       />
 
-      <Tabs defaultValue="posts" className="mt-12 w-full">
-        <TabsList className="justify-start gap-1">
-          <TabsTrigger value="posts" className="min-w-[96px]">
-            Posts
-          </TabsTrigger>
-          <TabsTrigger value="plugins" className="min-w-[96px]">
-            Plugins
-          </TabsTrigger>
-          <TabsTrigger value="companies" className="min-w-[96px]">
-            Companies
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="posts" className="mt-6 min-h-[300px]">
-          {/* @ts-ignore */}
-          <ProfilePosts data={data?.posts} isOwner={isOwner} />
-        </TabsContent>
-
-        <TabsContent value="plugins" className="mt-6 min-h-[300px]">
-          <Suspense fallback={<div>Loading...</div>}>
-            <ProfilePlugins userId={data?.id} isOwner={isOwner} />
-          </Suspense>
-        </TabsContent>
-
-        <TabsContent value="companies" className="mt-6 min-h-[300px]">
-          <Suspense fallback={<div>Loading...</div>}>
-            <ProfileCompanies userId={data?.id} isOwner={isOwner} />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
+      <ProfileTabs>
+        {{
+          posts: (
+            // @ts-ignore
+            <ProfilePosts data={data?.posts} isOwner={isOwner} />
+          ),
+          plugins: (
+            <Suspense fallback={<div>Loading...</div>}>
+              <ProfilePlugins userId={data?.id} isOwner={isOwner} />
+            </Suspense>
+          ),
+          companies: (
+            <Suspense fallback={<div>Loading...</div>}>
+              <ProfileCompanies userId={data?.id} isOwner={isOwner} />
+            </Suspense>
+          ),
+          starred: (
+            <Suspense fallback={<div>Loading...</div>}>
+              <ProfileStarredPlugins userId={data?.id} />
+            </Suspense>
+          ),
+        }}
+      </ProfileTabs>
 
       <div className="mt-10 flex items-center justify-between border-t border-border pt-6 text-sm text-muted-foreground">
         <span>Joined Cursor Directory</span>

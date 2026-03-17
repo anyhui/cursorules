@@ -1,5 +1,5 @@
 import { MembersTabs } from "@/components/members/members-tabs";
-import { getCompanies, getTotalUsers } from "@/data/queries";
+import { getCompanies, getMembers, getTotalUsers } from "@/data/queries";
 import { formatNumber } from "@/utils/format";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -13,10 +13,12 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function Page() {
-  const [{ data: totalUsers }, { data: companies }] = await Promise.all([
-    getTotalUsers(),
-    getCompanies(),
-  ]);
+  const [{ data: totalUsers }, { data: companies }, { data: initialMembers }] =
+    await Promise.all([
+      getTotalUsers(),
+      getCompanies(),
+      getMembers({ page: 1, limit: 90 }),
+    ]);
 
   return (
     <div className="page-shell pb-32 pt-24 md:pt-32">
@@ -41,6 +43,7 @@ export default async function Page() {
         <MembersTabs
           totalMembers={totalUsers?.count ?? 0}
           companies={(companies as any[]) ?? []}
+          initialMembers={(initialMembers as any[]) ?? []}
         />
       </Suspense>
     </div>
