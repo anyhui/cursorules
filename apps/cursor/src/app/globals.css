@@ -115,7 +115,6 @@
   }
 
   html {
-    @apply scroll-smooth;
     background-color: var(--bg-chrome);
     color: var(--text-primary);
   }
