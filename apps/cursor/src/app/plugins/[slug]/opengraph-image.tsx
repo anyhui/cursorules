@@ -1,5 +1,5 @@
 import { getPluginBySlug } from "@/data/queries";
-import { OG, OGLayout, createOGResponse, formatCount } from "@/lib/og";
+import { OG, OGLayout, CursorIcon, createOGResponse, formatCount } from "@/lib/og";
 
 export const alt = "Plugin";
 export const size = { width: OG.width, height: OG.height };
@@ -43,14 +43,38 @@ export default async function Image({
     <OGLayout>
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          {data.logo && (
-            <img
-              src={data.logo}
-              width={72}
-              height={72}
-              style={{ borderRadius: 16, border: `1px solid ${OG.border}` }}
-            />
-          )}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 72,
+              height: 72,
+              borderRadius: 16,
+              border: `1px solid ${OG.border}`,
+              backgroundColor: OG.cardBg,
+              padding: 6,
+            }}
+          >
+            {data.logo ? (
+              <img
+                src={data.logo}
+                width={60}
+                height={60}
+                style={{ borderRadius: 10, objectFit: "contain" }}
+              />
+            ) : (
+              <span
+                style={{
+                  fontSize: 32,
+                  fontWeight: 700,
+                  color: OG.textSecondary,
+                }}
+              >
+                {data.name.charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
           <div
             style={{
               display: "flex",

@@ -2,6 +2,7 @@ import { cn, formatCount } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { PluginIconFallback } from "./plugin-icon";
 
 export type PluginCardData = {
   name: string;
@@ -25,19 +26,20 @@ export function PluginCard({ plugin }: { plugin: PluginCardData }) {
       <Card className="h-[156px] overflow-hidden border-border bg-transparent transition-colors hover:border-input hover:bg-transparent">
         <CardContent className="flex flex-col gap-3 p-4 h-full">
           <div className="flex items-center gap-3">
-            <Avatar className="size-9 rounded-[4px] flex-shrink-0 border border-border bg-muted">
-              {plugin.logo ? (
+            {plugin.logo ? (
+              <Avatar className="size-9 rounded-[4px] flex-shrink-0 border border-border bg-muted">
                 <AvatarImage
                   src={plugin.logo}
                   alt={plugin.name}
                   className={cn("object-cover", isSvgLogo(plugin.logo) && "invert")}
                 />
-              ) : (
                 <AvatarFallback className="rounded-[4px] bg-muted text-xs text-foreground">
                   {plugin.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
-              )}
-            </Avatar>
+              </Avatar>
+            ) : (
+              <PluginIconFallback size={36} />
+            )}
             <h3 className="truncate text-sm font-medium tracking-[0.005em] text-foreground">{plugin.name}</h3>
           </div>
 

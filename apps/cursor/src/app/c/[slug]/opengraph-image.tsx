@@ -34,12 +34,26 @@ export default async function Image({
     <OGLayout>
       <div style={{ display: "flex", alignItems: "center", gap: 40 }}>
         {data.image && (
-          <img
-            src={data.image}
-            width={120}
-            height={120}
-            style={{ borderRadius: 20, border: `1px solid ${OG.border}` }}
-          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 120,
+              height: 120,
+              borderRadius: 20,
+              border: `1px solid ${OG.border}`,
+              backgroundColor: OG.cardBg,
+              padding: 8,
+            }}
+          >
+            <img
+              src={data.image}
+              width={104}
+              height={104}
+              style={{ borderRadius: 14, objectFit: "contain" }}
+            />
+          </div>
         )}
 
         <div
