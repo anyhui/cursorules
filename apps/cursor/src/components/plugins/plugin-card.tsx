@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -18,11 +18,6 @@ export type PluginCardData = {
 
 const isSvgLogo = (url: string) => url.endsWith(".svg");
 
-function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
-  return String(n);
-}
 
 export function PluginCard({ plugin }: { plugin: PluginCardData }) {
   return (

@@ -28,34 +28,9 @@ export const metadata: Metadata = {
     url: "https://cursor.directory",
     locale: "en_US",
     type: "website",
-    images: [
-      {
-        url: "https://pub-abe1cd4008f5412abb77357f87d7d7bb.r2.dev/opengraph-image-v2.png",
-        width: 800,
-        height: 600,
-      },
-      {
-        url: "https://pub-abe1cd4008f5412abb77357f87d7d7bb.r2.dev/opengraph-image-v2.png",
-        width: 1800,
-        height: 1600,
-      },
-    ],
   },
   twitter: {
-    title: "Cursor Directory",
-    description: "Find the best cursor rules for your framework and language",
-    images: [
-      {
-        url: "https://pub-abe1cd4008f5412abb77357f87d7d7bb.r2.dev/opengraph-image-v2.png",
-        width: 800,
-        height: 600,
-      },
-      {
-        url: "https://pub-abe1cd4008f5412abb77357f87d7d7bb.r2.dev/opengraph-image-v2.png",
-        width: 1800,
-        height: 1600,
-      },
-    ],
+    card: "summary_large_image",
   },
 };
 

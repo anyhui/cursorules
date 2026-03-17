@@ -1,19 +1,13 @@
 "use client";
 
 import { starPluginAction } from "@/actions/star-plugin";
-import { cn } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { Star } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "../ui/button";
 
-function formatCount(n: number): string {
-  if (n >= 1_000_000)
-    return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
-  return String(n);
-}
 
 export function StarButton({
   pluginId,
