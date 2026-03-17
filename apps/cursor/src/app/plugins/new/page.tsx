@@ -22,7 +22,7 @@ export default async function Page() {
         <div className="mb-10 text-center">
           <h1 className="marketing-page-title mb-3">Submit a Plugin</h1>
           <p className="marketing-copy mx-auto max-w-md">
-            Paste a GitHub repo URL and we&apos;ll auto-detect everything.
+            Auto-detect from a GitHub repo or create one manually.
             <br />
             We follow the{" "}
             <a

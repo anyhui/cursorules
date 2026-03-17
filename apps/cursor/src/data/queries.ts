@@ -439,6 +439,26 @@ export async function getFeaturedPlugins({
   };
 }
 
+export async function getPendingPlugins({
+  since,
+}: { since?: string } = {}) {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("plugins")
+    .select("*, plugin_components(*)")
+    .eq("active", false)
+    .order("created_at", { ascending: false });
+
+  if (since) {
+    query = query.gte("created_at", since);
+  }
+
+  const { data, error } = await query;
+
+  return { data: data as PluginRow[] | null, error };
+}
+
 export async function hasUserStarredPlugin(pluginId: string, userId: string) {
   const supabase = await createClient();
   const { data } = await supabase

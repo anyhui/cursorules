@@ -1,3 +1,4 @@
+import { isAdmin } from "@/utils/admin";
 import { getSession } from "@/utils/supabase/auth";
 import {
   DEFAULT_SERVER_ERROR_MESSAGE,
@@ -48,4 +49,12 @@ export const authActionClient = actionClient.use(async ({ next }) => {
       name: session.user.user_metadata.name,
     },
   });
+});
+
+export const adminActionClient = authActionClient.use(async ({ next, ctx }) => {
+  if (!isAdmin(ctx.userId)) {
+    throw new ActionError("Unauthorized: admin access required");
+  }
+
+  return next({ ctx });
 });
