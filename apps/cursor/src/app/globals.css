@@ -1,5 +1,87 @@
 @import "tailwindcss";
-@config "../../tailwind.config.ts";
+@import "tw-animate-css";
+
+@source "../";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: var(--font-cursor-gothic), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-chrome: var(--bg-chrome);
+  --color-editor: var(--bg-editor);
+  --color-elevated: var(--bg-elevated);
+
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--text-inverted);
+  --color-brand-hover: var(--bg-brand-hover);
+  --color-neutral-hover: var(--bg-neutral-hover);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-quaternary: var(--text-quaternary);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-chart-1: #f54e00;
+  --color-chart-2: #5da1e5;
+  --color-chart-3: #3fa266;
+  --color-chart-4: #b48ead;
+  --color-chart-5: #f1b467;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-cursor: var(--cursor-box-shadow-sm);
+  --shadow-cursor-md: var(--cursor-box-shadow-base);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+}
+
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
 
 @layer base {
   :root {
@@ -52,10 +134,8 @@
     --border-quaternary: color-mix(in oklab, var(--base) 4%, transparent);
     --border-focus: var(--focus);
 
-    --cursor-box-shadow-sm:
-      0 2px 8px 0 var(--shadow-secondary);
-    --cursor-box-shadow-base:
-      0 0 4px 0 var(--shadow-secondary),
+    --cursor-box-shadow-sm: 0 2px 8px 0 var(--shadow-secondary);
+    --cursor-box-shadow-base: 0 0 4px 0 var(--shadow-secondary),
       0 8px 24px -2px var(--shadow-secondary);
 
     --background: var(--bg-chrome);
@@ -77,16 +157,6 @@
     --border: var(--border-tertiary);
     --input: var(--border-secondary);
     --ring: var(--border-focus);
-    --chart-1: #f54e00;
-    --chart-2: #5da1e5;
-    --chart-3: #3fa266;
-    --chart-4: #b48ead;
-    --chart-5: #f1b467;
-
-    --radius-xs: 4px;
-    --radius-sm: 6px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
   }
 
   .dark {
@@ -115,7 +185,6 @@
   }
 
   html {
-    @apply scroll-smooth;
     background-color: var(--bg-chrome);
     color: var(--text-primary);
   }
@@ -207,7 +276,11 @@
   }
 
   .surface-card-hover:hover {
-    background-color: color-mix(in srgb, var(--bg-elevated) 88%, var(--bg-quaternary));
+    background-color: color-mix(
+      in srgb,
+      var(--bg-elevated) 88%,
+      var(--bg-quaternary)
+    );
     border-color: var(--border-secondary);
   }
 }

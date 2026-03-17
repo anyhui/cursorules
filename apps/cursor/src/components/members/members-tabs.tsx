@@ -48,25 +48,36 @@ async function fetchMembersPage(
 export function MembersTabs({
   totalMembers,
   companies,
+  initialMembers = [],
 }: {
   totalMembers: number;
   companies: Company[];
+  initialMembers?: Member[];
 }) {
   const [selectedTab, setSelectedTab] = useQueryState("tab");
   const [sort, setSort] = useQueryState("sort");
   const [search] = useQueryState("q");
-  const [members, setMembers] = useState<Member[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [hasMoreMembers, setHasMoreMembers] = useState(true);
+  const [members, setMembers] = useState<Member[]>(initialMembers);
+  const [loading, setLoading] = useState(initialMembers.length === 0);
+  const [hasMoreMembers, setHasMoreMembers] = useState(
+    initialMembers.length === PAGE_SIZE,
+  );
   const [companyVisible, setCompanyVisible] = useState(PAGE_SIZE);
-  const offsetRef = useRef(0);
+  const offsetRef = useRef(initialMembers.length);
   const loadingRef = useRef(false);
   const sortRef = useRef(sort);
   const searchRef = useRef(search);
+  const initialLoadRef = useRef(true);
   sortRef.current = sort;
   searchRef.current = search;
 
   useEffect(() => {
+    if (initialLoadRef.current && !sort && !search) {
+      initialLoadRef.current = false;
+      return;
+    }
+    initialLoadRef.current = false;
+
     let cancelled = false;
     setMembers([]);
     setHasMoreMembers(true);

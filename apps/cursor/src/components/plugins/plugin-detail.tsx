@@ -4,6 +4,7 @@ import { CursorDeepLink } from "@/components/cursor-deeplink";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PluginRow } from "@/data/queries";
 import { cn } from "@/lib/utils";
+import { PluginIconFallback } from "./plugin-icon";
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,15 +47,20 @@ export function PluginDetailView({
   return (
     <div className="min-h-screen px-4 pt-24 md:pt-32">
       <div className="page-shell max-w-4xl px-0 py-8">
-        <div className="mb-6 flex items-start gap-4">
-          {plugin.logo && (
+        <div className="mb-6 flex items-center gap-4">
+          {plugin.logo ? (
             <Image
               src={plugin.logo}
               alt={`${plugin.name} logo`}
-              width={48}
-              height={48}
-              className={cn("mt-1 rounded-md border border-border bg-card p-1", plugin.logo.endsWith(".svg") && "invert")}
+              width={40}
+              height={40}
+              className={cn(
+                "rounded-lg border border-border bg-card p-1",
+                plugin.logo.endsWith(".svg") && "invert",
+              )}
             />
+          ) : (
+            <PluginIconFallback size={40} />
           )}
           <div className="flex-1">
             <div className="flex items-center justify-between">

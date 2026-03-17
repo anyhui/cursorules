@@ -2,7 +2,6 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ActionError } from "./safe-action";
 import { authActionClient } from "./safe-action";
@@ -56,7 +55,7 @@ export const createPluginAction = authActionClient
           homepage: homepage || null,
           keywords: keywords || [],
           owner_id: userId,
-          active: true,
+          active: false,
           plan: "standard",
         })
         .select("id, slug")
@@ -102,6 +101,7 @@ export const createPluginAction = authActionClient
       }
 
       revalidatePath("/plugins");
-      redirect(`/plugins/${plugin.slug}`);
+
+      return { slug: plugin.slug };
     },
   );

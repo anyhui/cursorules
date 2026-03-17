@@ -11,6 +11,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -19,11 +28,25 @@ import {
   ChevronDown,
   Github,
   Loader2,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
+
+const COMPONENT_TYPES = [
+  "rule",
+  "mcp_server",
+  "skill",
+  "agent",
+  "hook",
+  "lsp_server",
+  "command",
+] as const;
 
 const COMPONENT_LABELS: Record<string, string> = {
   rule: "Rule",
@@ -34,44 +57,6 @@ const COMPONENT_LABELS: Record<string, string> = {
   lsp_server: "LSP Server",
   command: "Command",
 };
-
-const SUPPORTED_COMPONENTS = [
-  {
-    label: "Rules",
-    path: "rules/*.mdc",
-    href: "https://open-plugins.com/agent-builders/components/rules",
-  },
-  {
-    label: "MCP Servers",
-    path: ".mcp.json / mcp.json",
-    href: "https://open-plugins.com/agent-builders/components/mcp-servers",
-  },
-  {
-    label: "Skills",
-    path: "skills/*/SKILL.md",
-    href: "https://open-plugins.com/agent-builders/components/skills",
-  },
-  {
-    label: "Agents",
-    path: "agents/*.md",
-    href: "https://open-plugins.com/agent-builders/components/agents",
-  },
-  {
-    label: "Hooks",
-    path: "hooks/hooks.json",
-    href: "https://open-plugins.com/agent-builders/components/hooks",
-  },
-  {
-    label: "Commands",
-    path: "commands/*.md",
-    href: "https://open-plugins.com/agent-builders/components/commands",
-  },
-  {
-    label: "LSP Servers",
-    path: ".lsp.json",
-    href: "https://open-plugins.com/agent-builders/components/lsp-servers",
-  },
-];
 
 type ParsedComponent = {
   type: string;
@@ -97,7 +82,22 @@ type ParsedPlugin = {
   components: ParsedComponent[];
 };
 
-const formSchema = z.object({
+type ManualComponent = {
+  id: string;
+  type: (typeof COMPONENT_TYPES)[number];
+  name: string;
+  description: string;
+  content: string;
+};
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+const autoFormSchema = z.object({
   url: z
     .string()
     .url("Please enter a valid URL")
@@ -105,6 +105,9 @@ const formSchema = z.object({
 });
 
 export function PluginForm() {
+  const router = useRouter();
+  const [mode, setMode] = useState<"auto" | "manual">("auto");
+
   const [parsed, setParsed] = useState<ParsedPlugin | null>(null);
   const [editedName, setEditedName] = useState("");
   const [editedDescription, setEditedDescription] = useState("");
@@ -114,8 +117,17 @@ export function PluginForm() {
     null,
   );
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const [manualName, setManualName] = useState("");
+  const [manualDescription, setManualDescription] = useState("");
+  const [manualRepository, setManualRepository] = useState("");
+  const [manualHomepage, setManualHomepage] = useState("");
+  const [manualKeywords, setManualKeywords] = useState("");
+  const [manualComponents, setManualComponents] = useState<ManualComponent[]>([
+    { id: crypto.randomUUID(), type: "rule", name: "", description: "", content: "" },
+  ]);
+
+  const form = useForm<z.infer<typeof autoFormSchema>>({
+    resolver: zodResolver(autoFormSchema),
     defaultValues: { url: "" },
   });
 
@@ -142,6 +154,12 @@ export function PluginForm() {
   const { execute: executeCreate, isExecuting: isCreating } = useAction(
     createPluginAction,
     {
+      onSuccess: () => {
+        toast.success(
+          "Plugin submitted! We'll review it and get back to you shortly.",
+        );
+        router.push("/plugins");
+      },
       onError: ({ error }) => {
         setPublishError(
           error.serverError ?? "Failed to publish plugin. Please try again.",
@@ -150,14 +168,14 @@ export function PluginForm() {
     },
   );
 
-  const onParse = (values: z.infer<typeof formSchema>) => {
+  const onParse = (values: z.infer<typeof autoFormSchema>) => {
     setParseError(null);
     setPublishError(null);
     setParsed(null);
     executeParse({ url: values.url });
   };
 
-  const onPublish = () => {
+  const onPublishAuto = () => {
     if (!parsed) return;
     setPublishError(null);
 
@@ -179,6 +197,59 @@ export function PluginForm() {
     });
   };
 
+  const onPublishManual = () => {
+    setPublishError(null);
+
+    const validComponents = manualComponents.filter((c) => c.name.trim());
+    if (!manualName.trim() || !manualDescription.trim() || validComponents.length === 0) {
+      setPublishError(
+        "Please fill in the plugin name, description, and at least one component with a name.",
+      );
+      return;
+    }
+
+    executeCreate({
+      name: manualName.trim(),
+      description: manualDescription.trim(),
+      logo: null,
+      repository: manualRepository.trim() || null,
+      homepage: manualHomepage.trim() || null,
+      keywords: manualKeywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean),
+      components: validComponents.map((c) => ({
+        type: c.type as any,
+        name: c.name.trim(),
+        slug: slugify(c.name),
+        description: c.description.trim() || undefined,
+        content: c.content.trim() || undefined,
+        metadata: {},
+      })),
+    });
+  };
+
+  const addManualComponent = () => {
+    setManualComponents((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), type: "rule", name: "", description: "", content: "" },
+    ]);
+  };
+
+  const removeManualComponent = (id: string) => {
+    setManualComponents((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const updateManualComponent = (
+    id: string,
+    field: keyof ManualComponent,
+    value: string,
+  ) => {
+    setManualComponents((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)),
+    );
+  };
+
   const componentsByType = parsed
     ? Object.entries(
         parsed.components.reduce(
@@ -193,236 +264,421 @@ export function PluginForm() {
       )
     : [];
 
+  const manualFormValid =
+    manualName.trim().length >= 2 &&
+    manualDescription.trim().length >= 10 &&
+    manualComponents.some((c) => c.name.trim());
+
   return (
     <div className="space-y-6">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onParse)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="url"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Github className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="https://github.com/you/your-plugin"
-                        {...field}
-                        className="border-border pl-10 placeholder:text-text-quaternary"
-                        disabled={isParsing}
-                      />
-                    </div>
-                    <Button
-                      type="submit"
-                      disabled={isParsing}
-                      className="flex-shrink-0"
-                    >
-                      {isParsing ? (
-                        <>
-                          <Loader2 className="size-4 animate-spin mr-2" />
-                          Scanning...
-                        </>
-                      ) : parsed ? (
-                        "Re-scan"
-                      ) : (
-                        "Scan repo"
-                      )}
-                    </Button>
-                  </div>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </form>
-      </Form>
+      <Tabs
+        value={mode}
+        onValueChange={(v) => {
+          setMode(v as "auto" | "manual");
+          setPublishError(null);
+        }}
+      >
+        <TabsList className="w-full">
+          <TabsTrigger value="auto" className="flex-1">
+            Auto (GitHub)
+          </TabsTrigger>
+          <TabsTrigger value="manual" className="flex-1">
+            Manual
+          </TabsTrigger>
+        </TabsList>
 
-      {parseError && (
-        <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
-          <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-400" />
-          <div className="text-sm text-red-400">
-            <p>{parseError}</p>
-          </div>
-        </div>
-      )}
+        <TabsContent value="auto" className="mt-6">
+          <div className="space-y-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onParse)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <div className="relative flex-1">
+                            <Github className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              placeholder="https://github.com/you/your-plugin"
+                              {...field}
+                              className="border-border pl-10 placeholder:text-[#878787]"
+                              disabled={isParsing}
+                            />
+                          </div>
+                          <Button
+                            type="submit"
+                            disabled={isParsing}
+                            className="h-11 flex-shrink-0"
+                          >
+                            {isParsing ? (
+                              <>
+                                <Loader2 className="size-4 animate-spin mr-2" />
+                                Scanning...
+                              </>
+                            ) : parsed ? (
+                              "Re-scan"
+                            ) : (
+                              "Scan repo"
+                            )}
+                          </Button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </form>
+            </Form>
 
-      {parsed && (
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <div>
-              <label className="mb-1.5 block text-xs text-muted-foreground">
-                Name
-              </label>
-              <Input
-                value={editedName}
-                onChange={(e) => setEditedName(e.target.value)}
-                className="border-border"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs text-muted-foreground">
-                Description
-              </label>
-              <Input
-                value={editedDescription}
-                onChange={(e) => setEditedDescription(e.target.value)}
-                className="border-border"
-              />
-            </div>
-            {parsed.author_name && (
-              <p className="text-xs text-muted-foreground">
-                by {parsed.author_name}
-              </p>
-            )}
-            {parsed.keywords.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {parsed.keywords.map((kw) => (
-                  <span
-                    key={kw}
-                    className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground"
-                  >
-                    {kw}
-                  </span>
-                ))}
+            {parseError && (
+              <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+                <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-400" />
+                <div className="text-sm text-red-400">
+                  <p>{parseError}</p>
+                </div>
               </div>
             )}
-          </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Check className="size-3.5 text-emerald-500" />
-              <p className="text-sm text-muted-foreground">
-                Found {parsed.components.length}{" "}
-                {parsed.components.length === 1 ? "component" : "components"}
+            {parsed && (
+              <div className="space-y-6">
+                <div className="space-y-6">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      Name
+                    </label>
+                    <Input
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      className="border-border placeholder:text-[#878787]"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      Description
+                    </label>
+                    <Input
+                      value={editedDescription}
+                      onChange={(e) => setEditedDescription(e.target.value)}
+                      className="border-border placeholder:text-[#878787]"
+                    />
+                  </div>
+                  {parsed.author_name && (
+                    <p className="text-xs text-muted-foreground">
+                      by {parsed.author_name}
+                    </p>
+                  )}
+                  {parsed.keywords.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {parsed.keywords.map((kw) => (
+                        <span
+                          key={kw}
+                          className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground"
+                        >
+                          {kw}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Check className="size-3.5 text-emerald-500" />
+                    <p className="text-sm text-muted-foreground">
+                      Found {parsed.components.length}{" "}
+                      {parsed.components.length === 1
+                        ? "component"
+                        : "components"}
+                    </p>
+                  </div>
+
+                  {componentsByType.map(([type, components]) => (
+                    <div key={type} className="space-y-1.5">
+                      <p className="text-xs font-mono uppercase tracking-wider text-text-tertiary">
+                        {COMPONENT_LABELS[type] ?? type} ({components.length})
+                      </p>
+                      {components.map((comp) => {
+                        const isExpanded =
+                          expandedComponent === `${type}:${comp.slug}`;
+                        return (
+                          <div
+                            key={`${type}:${comp.slug}`}
+                            className="overflow-hidden rounded-lg border border-border bg-card shadow-cursor"
+                          >
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-accent"
+                              onClick={() =>
+                                setExpandedComponent(
+                                  isExpanded ? null : `${type}:${comp.slug}`,
+                                )
+                              }
+                            >
+                              <span className="text-sm">{comp.name}</span>
+                              <ChevronDown
+                                className={cn(
+                                  "size-3.5 text-muted-foreground transition-transform",
+                                  isExpanded && "rotate-180",
+                                )}
+                              />
+                            </button>
+                            {isExpanded && comp.content && (
+                              <div className="border-t border-border bg-editor p-3">
+                                <code className="block max-h-48 overflow-y-auto whitespace-pre-wrap text-xs leading-6 text-muted-foreground">
+                                  {comp.content.slice(0, 2000)}
+                                  {(comp.content?.length ?? 0) > 2000 &&
+                                    "\n..."}
+                                </code>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
+
+                {publishError && (
+                  <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+                    <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-400" />
+                    <p className="text-sm text-red-400">{publishError}</p>
+                  </div>
+                )}
+
+                <Button
+                  onClick={onPublishAuto}
+                  size="lg"
+                  disabled={isCreating || !editedName.trim()}
+                  className="w-full"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin mr-2" />
+                      Publishing...
+                    </>
+                  ) : (
+                    "Publish Plugin"
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {!parsed && !parseError && (
+              <p className="text-center text-xs text-muted-foreground pt-2">
+                We&apos;ll scan for rules, MCP servers, skills, agents, and
+                more following the{" "}
+                <a
+                  href="https://open-plugins.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="border-b border-border border-dashed hover:text-foreground transition-colors"
+                >
+                  Open Plugins
+                </a>{" "}
+                standard.
               </p>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="manual" className="mt-6">
+          <div className="space-y-6">
+            <div className="space-y-6">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  Name
+                </label>
+                <Input
+                  value={manualName}
+                  onChange={(e) => setManualName(e.target.value)}
+                  placeholder="My Plugin"
+                  className="border-border placeholder:text-[#878787]"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  Description
+                </label>
+                <Input
+                  value={manualDescription}
+                  onChange={(e) => setManualDescription(e.target.value)}
+                  placeholder="A short description of what this plugin does"
+                  className="border-border placeholder:text-[#878787]"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  Repository URL
+                  <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <Input
+                  value={manualRepository}
+                  onChange={(e) => setManualRepository(e.target.value)}
+                  placeholder="https://github.com/you/your-plugin"
+                  className="border-border placeholder:text-[#878787]"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  Homepage
+                  <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <Input
+                  value={manualHomepage}
+                  onChange={(e) => setManualHomepage(e.target.value)}
+                  placeholder="https://your-plugin.dev"
+                  className="border-border placeholder:text-[#878787]"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  Keywords
+                  <span className="ml-1 font-normal text-muted-foreground">(optional, comma-separated)</span>
+                </label>
+                <Input
+                  value={manualKeywords}
+                  onChange={(e) => setManualKeywords(e.target.value)}
+                  placeholder="react, typescript, testing"
+                  className="border-border placeholder:text-[#878787]"
+                />
+              </div>
             </div>
 
-            {componentsByType.map(([type, components]) => (
-              <div key={type} className="space-y-1.5">
-                <p className="text-xs font-mono uppercase tracking-wider text-text-tertiary">
-                  {COMPONENT_LABELS[type] ?? type} ({components.length})
-                </p>
-                {components.map((comp) => {
-                  const isExpanded =
-                    expandedComponent === `${type}:${comp.slug}`;
-                  return (
-                    <div
-                      key={`${type}:${comp.slug}`}
-                      className="overflow-hidden rounded-lg border border-border bg-card shadow-cursor"
-                    >
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Components</label>
+                <button
+                  type="button"
+                  onClick={addManualComponent}
+                  className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <Plus className="size-3" />
+                  Add
+                </button>
+              </div>
+
+              {manualComponents.map((comp, index) => (
+                <div
+                  key={comp.id}
+                  className="space-y-3 rounded-lg border border-border bg-card p-4 shadow-cursor"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Component {index + 1}
+                    </p>
+                    {manualComponents.length > 1 && (
                       <button
                         type="button"
-                        className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-accent"
-                        onClick={() =>
-                          setExpandedComponent(
-                            isExpanded ? null : `${type}:${comp.slug}`,
-                          )
+                        onClick={() => removeManualComponent(comp.id)}
+                        className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium">
+                        Type
+                      </label>
+                      <Select
+                        value={comp.type}
+                        onValueChange={(v) =>
+                          updateManualComponent(comp.id, "type", v)
                         }
                       >
-                        <span className="text-sm">{comp.name}</span>
-                        <ChevronDown
-                          className={cn(
-                            "size-3.5 text-muted-foreground transition-transform",
-                            isExpanded && "rotate-180",
-                          )}
-                        />
-                      </button>
-                      {isExpanded && comp.content && (
-                        <div className="border-t border-border bg-editor p-3">
-                          <code className="block max-h-48 overflow-y-auto whitespace-pre-wrap text-xs leading-6 text-muted-foreground">
-                            {comp.content.slice(0, 2000)}
-                            {(comp.content?.length ?? 0) > 2000 && "\n..."}
-                          </code>
-                        </div>
-                      )}
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {COMPONENT_TYPES.map((t) => (
+                            <SelectItem key={t} value={t}>
+                              {COMPONENT_LABELS[t]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {publishError && (
-            <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
-              <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-400" />
-              <p className="text-sm text-red-400">{publishError}</p>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium">
+                        Name
+                      </label>
+                      <Input
+                        value={comp.name}
+                        onChange={(e) =>
+                          updateManualComponent(comp.id, "name", e.target.value)
+                        }
+                        placeholder="my-rule"
+                        className="border-border placeholder:text-[#878787]"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      Description
+                      <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+                    </label>
+                    <Input
+                      value={comp.description}
+                      onChange={(e) =>
+                        updateManualComponent(
+                          comp.id,
+                          "description",
+                          e.target.value,
+                        )
+                      }
+                      placeholder="What this component does"
+                      className="border-border placeholder:text-[#878787]"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      Content
+                    </label>
+                    <Textarea
+                      value={comp.content}
+                      onChange={(e) =>
+                        updateManualComponent(
+                          comp.id,
+                          "content",
+                          e.target.value,
+                        )
+                      }
+                      placeholder="Paste or write the component content here..."
+                      className="min-h-[100px] border-border font-mono text-sm placeholder:text-[#878787] placeholder:font-sans"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
 
-          <Button
-            onClick={onPublish}
-            size="lg"
-            disabled={isCreating || !editedName.trim()}
-            className="w-full"
-          >
-            {isCreating ? (
-              <>
-                <Loader2 className="size-4 animate-spin mr-2" />
-                Publishing...
-              </>
-            ) : (
-              "Publish Plugin"
+            {publishError && (
+              <div className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+                <AlertCircle className="mt-0.5 size-4 shrink-0 text-red-400" />
+                <p className="text-sm text-red-400">{publishError}</p>
+              </div>
             )}
-          </Button>
-        </div>
-      )}
 
-      {!parsed && !parseError && (
-        <div className="border-t border-border pt-6">
-          <div className="grid grid-cols-2 gap-2">
-            {SUPPORTED_COMPONENTS.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5 shadow-cursor transition-colors hover:bg-accent"
-              >
-                <span className="text-xs text-muted-foreground transition-colors group-hover:text-foreground">
-                  {item.label}
-                </span>
-                <span className="text-[10px] font-mono text-text-tertiary">
-                  {item.path}
-                </span>
-              </a>
-            ))}
+            <Button
+              onClick={onPublishManual}
+              size="lg"
+              disabled={isCreating || !manualFormValid}
+              className="w-full"
+            >
+              {isCreating ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                  Publishing...
+                </>
+              ) : (
+                "Publish Plugin"
+              )}
+            </Button>
           </div>
-
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            Single-plugin and multi-plugin repos are both supported.
-          </p>
-
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground">
-            <a
-              href="https://open-plugins.com/plugin-builders/specification"
-              target="_blank"
-              rel="noreferrer"
-              className="border-b border-border border-dashed hover:text-foreground transition-colors"
-            >
-              Specification
-            </a>
-            <span className="text-text-quaternary">/</span>
-            <a
-              href="https://open-plugins.com/plugin-builders"
-              target="_blank"
-              rel="noreferrer"
-              className="border-b border-border border-dashed hover:text-foreground transition-colors"
-            >
-              Getting Started
-            </a>
-            <span className="text-text-quaternary">/</span>
-            <a
-              href="https://github.com/cursor/plugin-template"
-              target="_blank"
-              rel="noreferrer"
-              className="border-b border-border border-dashed hover:text-foreground transition-colors"
-            >
-              Template
-            </a>
-          </div>
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

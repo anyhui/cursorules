@@ -3,8 +3,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useState } from "react";
-import { CommandMenu } from "./command-menu";
+import { Suspense } from "react";
 import { MobileMenu } from "./mobile-menu";
 import { UserMenu } from "./user-menu";
 
@@ -16,13 +15,8 @@ export const navigationLinks = [
   { href: "/board", label: "Board" },
 ] as const;
 
-export function Header({
-  pluginItems,
-}: {
-  pluginItems?: { name: string; slug: string }[];
-}) {
+export function Header() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
 
   const isActiveLink = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
@@ -66,7 +60,6 @@ export function Header({
           </div>
         </div>
       </div>
-      <CommandMenu open={open} setOpen={setOpen} items={pluginItems} />
     </div>
   );
 }
