@@ -5,7 +5,7 @@ import { PluginCard } from "@/components/plugins/plugin-card";
 import Fuse from "fuse.js";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BoardPost } from "./board/board-post";
 import { EventCard } from "./events/event-card";
 import { GlobalSearchInput } from "./global-search-input";
@@ -74,12 +74,31 @@ export function Startpage({
     );
   }, [search, isSearching, jobs]);
 
-  const filteredMembers = useMemo(() => {
-    if (!isSearching) return members;
-    return (members ?? []).filter((m: any) =>
-      matchesSearch(search, m.name, m.bio),
-    );
-  }, [search, isSearching, members]);
+  const [searchedMembers, setSearchedMembers] = useState<any[] | null>(null);
+
+  useEffect(() => {
+    if (!isSearching) {
+      setSearchedMembers(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      fetch(`/api/members?q=${encodeURIComponent(search)}`, {
+        signal: controller.signal,
+      })
+        .then((r) => r.json())
+        .then(({ data }) => setSearchedMembers(data ?? []))
+        .catch(() => {});
+    }, 300);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [search, isSearching]);
+
+  const filteredMembers = isSearching ? searchedMembers : members;
 
   const filteredEvents = useMemo(() => {
     if (!isSearching) return upcomingEvents;
@@ -303,10 +322,14 @@ export function Startpage({
                   <h3 className="section-eyebrow">Members</h3>
                 </Link>
                 <Link
-                  href="/members"
+                  href={
+                    isSearching
+                      ? `/members?q=${encodeURIComponent(search)}`
+                      : "/members"
+                  }
                   className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
-                  <span>View all</span>
+                  <span>{isSearching ? "See all results" : "View all"}</span>
                   <svg
                     width="12"
                     height="13"
@@ -335,15 +358,17 @@ export function Startpage({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filteredMembers.map((member) => (
-                  // @ts-ignore
-                  <MembersCard key={member.id} member={member} gray />
-                ))}
+                {filteredMembers
+                  .slice(0, isSearching ? 8 : 4)
+                  .map((member) => (
+                    // @ts-ignore
+                    <MembersCard key={member.id} member={member} gray />
+                  ))}
               </div>
             </div>
           )}
 
-          {filteredPosts && filteredPosts.length > 0 && !isSearching && (
+          {filteredPosts && filteredPosts.length > 0 && (
             <div className="mb-14">
               <div className="mb-5 flex items-center justify-between">
                 <Link href="/board">
@@ -438,7 +463,8 @@ export function Startpage({
             filteredPlugins.length === 0 &&
             filteredEvents.length === 0 &&
             (!filteredJobs || filteredJobs.length === 0) &&
-            (!filteredMembers || filteredMembers.length === 0) && (
+            (!filteredMembers || filteredMembers.length === 0) &&
+            (!filteredPosts || filteredPosts.length === 0) && (
               <div className="flex flex-col items-center mt-16">
                 <p className="text-sm text-muted-foreground">
                   No results found for &quot;{search}&quot;

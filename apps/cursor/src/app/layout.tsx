@@ -6,7 +6,6 @@ import { GlobalModals } from "@/components/modals/global-modals";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
-import { getPlugins } from "@/data/queries";
 import { OpenPanelComponent } from "@openpanel/nextjs";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
@@ -14,23 +13,33 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { cursorGothic } from "@/styles/fonts";
 
 export const metadata: Metadata = {
-  title: "Cursor Directory",
-  description: "Find the best cursor rules for your framework and language",
+  title: {
+    default: "Cursor Directory",
+    template: "%s | Cursor Directory",
+  },
+  description:
+    "Discover plugins, MCP servers, rules, and resources for Cursor — the AI code editor. Join thousands of developers.",
   icons: [
     {
       rel: "icon",
       url: "/favicon.svg",
     },
   ],
+  metadataBase: new URL("https://cursor.directory"),
   openGraph: {
     title: "Cursor Directory",
-    description: "Find the best cursor rules for your framework and language",
+    description:
+      "Discover plugins, MCP servers, rules, and resources for Cursor — the AI code editor.",
     url: "https://cursor.directory",
+    siteName: "Cursor Directory",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
+    title: "Cursor Directory",
+    description:
+      "Discover plugins, MCP servers, rules, and resources for Cursor — the AI code editor.",
   },
 };
 
@@ -50,12 +59,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { data: plugins } = await getPlugins({ fetchAll: true });
-  const pluginItems = (plugins ?? []).map((p) => ({
-    name: p.name,
-    slug: p.slug,
-  }));
-
   return (
     <html
       lang="en"
@@ -74,7 +77,7 @@ export default async function RootLayout({
         >
           <NuqsAdapter>
             <ScrollToTop />
-            <Header pluginItems={pluginItems} />
+            <Header />
             {children}
             <JoinCTA />
             <Footer />
