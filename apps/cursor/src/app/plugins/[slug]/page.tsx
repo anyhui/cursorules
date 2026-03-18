@@ -1,5 +1,6 @@
 import { PluginDetailView } from "@/components/plugins/plugin-detail";
 import { getPluginBySlug, getPlugins } from "@/data/queries";
+import { isAdmin } from "@/utils/admin";
 import { getSession } from "@/utils/supabase/auth";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -47,7 +48,8 @@ export default async function Page({ params }: { params: Params }) {
 
   if (!plugin.active) {
     const session = await getSession();
-    if (!session || plugin.owner_id !== session.user.id) {
+    const userId = session?.user.id;
+    if (!userId || (plugin.owner_id !== userId && !isAdmin(userId))) {
       notFound();
     }
   }
