@@ -1,3 +1,7 @@
+"use client";
+
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import Link from "next/link";
 
 const columns = [
@@ -85,6 +89,39 @@ const socials = [
   },
 ];
 
+function ThemeToggle() {
+  const { setTheme, theme } = useTheme();
+
+  return (
+    <div className="flex items-center gap-1 rounded-full border border-border p-1">
+      <button
+        type="button"
+        onClick={() => setTheme("light")}
+        className={`rounded-full p-1.5 transition-colors ${theme === "light" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+        aria-label="Light theme"
+      >
+        <Sun className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setTheme("dark")}
+        className={`rounded-full p-1.5 transition-colors ${theme === "dark" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+        aria-label="Dark theme"
+      >
+        <Moon className="size-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={() => setTheme("system")}
+        className={`rounded-full p-1.5 transition-colors ${theme === "system" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+        aria-label="System theme"
+      >
+        <Monitor className="size-3.5" />
+      </button>
+    </div>
+  );
+}
+
 export function Footer() {
   return (
     <footer className="border-t border-border">
@@ -132,6 +169,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-4">
+            <ThemeToggle />
             {socials.map((social) => (
               <a
                 key={social.label}

@@ -2,6 +2,8 @@
 
 import { createClient } from "@/utils/supabase/client";
 import { motion } from "framer-motion";
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useQueryStates } from "nuqs";
@@ -13,6 +15,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Skeleton } from "./ui/skeleton";
@@ -27,6 +33,7 @@ type User = {
 export function UserMenu() {
   const pathname = usePathname();
   const supabase = createClient();
+  const { setTheme, theme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -114,6 +121,28 @@ export function UserMenu() {
               <DropdownMenuItem asChild>
                 <Link href="/jobs/new">Post a job</Link>
               </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Theme</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setTheme("light")}>
+                      <Sun className="mr-2 size-3.5" />
+                      Light
+                      {theme === "light" && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
+                      <Moon className="mr-2 size-3.5" />
+                      Dark
+                      {theme === "dark" && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("system")}>
+                      <Monitor className="mr-2 size-3.5" />
+                      System
+                      {theme === "system" && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
               <DropdownMenuItem onClick={handleSignOut}>
                 Sign out
               </DropdownMenuItem>
