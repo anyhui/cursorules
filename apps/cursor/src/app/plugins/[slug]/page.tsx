@@ -1,5 +1,6 @@
 import { PluginDetailView } from "@/components/plugins/plugin-detail";
 import { getPluginBySlug, getPlugins } from "@/data/queries";
+import { getSession } from "@/utils/supabase/auth";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -14,9 +15,19 @@ export async function generateMetadata({
 
   const { data: plugin } = await getPluginBySlug(slug);
   if (plugin) {
+    const title = `${plugin.name} | Cursor Directory`;
+    const description = plugin.description ?? undefined;
     return {
-      title: `${plugin.name} | Cursor Directory`,
-      description: plugin.description ?? undefined,
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+      },
+      twitter: {
+        title,
+        description,
+      },
     };
   }
 
@@ -33,6 +44,13 @@ export default async function Page({ params }: { params: Params }) {
 
   const { data: plugin } = await getPluginBySlug(slug);
   if (!plugin) notFound();
+
+  if (!plugin.active) {
+    const session = await getSession();
+    if (!session || plugin.owner_id !== session.user.id) {
+      notFound();
+    }
+  }
 
   return <PluginDetailView plugin={plugin} />;
 }

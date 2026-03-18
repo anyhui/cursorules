@@ -5,6 +5,14 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Trending in Cursor Today | Cursor Directory",
   description: "Explore what the community is talking about",
+  openGraph: {
+    title: "Trending in Cursor Today | Cursor Directory",
+    description: "Explore what the community is talking about",
+  },
+  twitter: {
+    title: "Trending in Cursor Today | Cursor Directory",
+    description: "Explore what the community is talking about",
+  },
 };
 
 export const revalidate = 60;

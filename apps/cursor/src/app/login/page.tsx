@@ -6,6 +6,16 @@ export const metadata: Metadata = {
   title: "Sign in | Cursor Directory",
   description:
     "Sign in to Cursor Directory to submit plugins, star your favorites, and connect with the community.",
+  openGraph: {
+    title: "Sign in | Cursor Directory",
+    description:
+      "Sign in to Cursor Directory to submit plugins, star your favorites, and connect with the community.",
+  },
+  twitter: {
+    title: "Sign in | Cursor Directory",
+    description:
+      "Sign in to Cursor Directory to submit plugins, star your favorites, and connect with the community.",
+  },
 };
 
 export default function LoginPage() {

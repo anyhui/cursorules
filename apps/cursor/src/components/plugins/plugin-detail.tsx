@@ -4,15 +4,24 @@ import { CursorDeepLink } from "@/components/cursor-deeplink";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PluginRow } from "@/data/queries";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/utils/supabase/client";
 import { PluginIconFallback } from "./plugin-icon";
-import { ChevronDown } from "lucide-react";
+import { Check, ChevronDown, Copy, Pencil } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StarButton } from "./star-button";
 
 function buildRuleDeepLink(name: string, content: string) {
   return `cursor://anysphere.cursor-deeplink/rule?name=${encodeURIComponent(name)}&text=${encodeURIComponent(content)}`;
+}
+
+function buildCommandDeepLink(name: string, content: string) {
+  return `cursor://anysphere.cursor-deeplink/command?name=${encodeURIComponent(name)}&text=${encodeURIComponent(content)}`;
+}
+
+function buildMCPInstallDeepLink(name: string, config: string) {
+  return `cursor://anysphere.cursor-deeplink/mcp/install?name=${encodeURIComponent(name)}&config=${btoa(config)}`;
 }
 
 type ComponentType = "rule" | "mcp_server" | "skill" | "agent" | "hook" | "lsp_server" | "command";
@@ -32,6 +41,17 @@ export function PluginDetailView({
 }: {
   plugin: PluginRow;
 }) {
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && plugin.owner_id === session.user.id) {
+        setIsOwner(true);
+      }
+    });
+  }, [plugin.owner_id]);
+
   const components = plugin.plugin_components ?? [];
   const componentTypes = [...new Set(components.map((c) => c.type))] as ComponentType[];
   const [activeTab, setActiveTab] = useState<ComponentType>(componentTypes[0] ?? "rule");
@@ -47,6 +67,13 @@ export function PluginDetailView({
   return (
     <div className="min-h-screen px-4 pt-24 md:pt-32">
       <div className="page-shell max-w-4xl px-0 py-8">
+        {!plugin.active && (
+          <div className="mb-6 flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 px-4 py-3">
+            <span className="text-sm text-yellow-600 dark:text-yellow-400">
+              Under review — this plugin is only visible to you until it's approved.
+            </span>
+          </div>
+        )}
         <div className="mb-6 flex items-center gap-4">
           {plugin.logo ? (
             <Image
@@ -65,11 +92,22 @@ export function PluginDetailView({
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-semibold tracking-tight">{plugin.name}</h1>
-              <StarButton
-                pluginId={plugin.id}
-                slug={plugin.slug}
-                starCount={plugin.star_count}
-              />
+              <div className="flex items-center gap-2">
+                {isOwner && (
+                  <Link
+                    href={`/plugins/${plugin.slug}/edit`}
+                    className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <Pencil className="size-3.5" />
+                    Edit
+                  </Link>
+                )}
+                <StarButton
+                  pluginId={plugin.id}
+                  slug={plugin.slug}
+                  starCount={plugin.star_count}
+                />
+              </div>
             </div>
             {plugin.author_name && (
               <p className="mt-1 text-sm text-muted-foreground">
@@ -248,6 +286,16 @@ function McpSection({
         const link = meta?.link as string | undefined;
         const mcpLink = meta?.mcp_link as string | undefined;
 
+        let installLink = mcpLink ?? null;
+        if (!installLink && mcp.content) {
+          try {
+            JSON.parse(mcp.content);
+            installLink = buildMCPInstallDeepLink(mcp.name, mcp.content);
+          } catch {
+            // content is not valid JSON, skip
+          }
+        }
+
         return (
           <div
             key={mcp.slug}
@@ -270,12 +318,47 @@ function McpSection({
                   <ExternalLinkIcon />
                 </Link>
               )}
-              {mcpLink && <CursorDeepLink mcp_link={mcpLink} />}
+              {installLink ? (
+                <CursorDeepLink mcp_link={installLink} />
+              ) : mcp.content ? (
+                <CopyButton text={mcp.content} />
+              ) : null}
             </div>
           </div>
         );
       })}
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [text]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {copied ? (
+        <>
+          <Check className="size-3" />
+          Copied
+        </>
+      ) : (
+        <>
+          <Copy className="size-3" />
+          Copy
+        </>
+      )}
+    </button>
   );
 }
 
@@ -295,7 +378,21 @@ function GenericComponentSection({
         {components.map((comp) => (
           <Card key={comp.slug} className="border-border bg-transparent">
             <CardContent className="p-4 space-y-2">
-              <h3 className="text-sm font-medium">{comp.name}</h3>
+              <div className="flex items-center justify-between gap-4">
+                <h3 className="text-sm font-medium">{comp.name}</h3>
+                {comp.content && (
+                  type === "command" ? (
+                    <a
+                      href={buildCommandDeepLink(comp.slug, comp.content)}
+                      className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Add to Cursor
+                    </a>
+                  ) : (
+                    <CopyButton text={comp.content} />
+                  )
+                )}
+              </div>
               {comp.description && (
                 <p className="text-xs leading-5 text-muted-foreground">{comp.description}</p>
               )}

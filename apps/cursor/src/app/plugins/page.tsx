@@ -9,6 +9,16 @@ export const metadata: Metadata = {
   title: "Plugins | Cursor Directory",
   description:
     "Rules, MCP servers, and integrations built by the community.",
+  openGraph: {
+    title: "Plugins | Cursor Directory",
+    description:
+      "Rules, MCP servers, and integrations built by the community.",
+  },
+  twitter: {
+    title: "Plugins | Cursor Directory",
+    description:
+      "Rules, MCP servers, and integrations built by the community.",
+  },
 };
 
 export const revalidate = 3600;

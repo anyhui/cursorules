@@ -5,6 +5,16 @@ export const metadata: Metadata = {
   title: "Events | Cursor Directory",
   description:
     "Meetups and events from the Cursor community around the world.",
+  openGraph: {
+    title: "Events | Cursor Directory",
+    description:
+      "Meetups and events from the Cursor community around the world.",
+  },
+  twitter: {
+    title: "Events | Cursor Directory",
+    description:
+      "Meetups and events from the Cursor community around the world.",
+  },
 };
 
 export const revalidate = 3600;

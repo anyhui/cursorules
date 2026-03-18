@@ -161,11 +161,11 @@ export function PluginForm() {
   const { execute: executeCreate, isExecuting: isCreating } = useAction(
     createPluginAction,
     {
-      onSuccess: () => {
+      onSuccess: ({ data }) => {
         toast.success(
           "Plugin submitted! We'll review it and get back to you shortly.",
         );
-        router.push("/plugins");
+        router.push(data?.slug ? `/plugins/${data.slug}` : "/plugins");
       },
       onError: ({ error }) => {
         setPublishError(

@@ -10,8 +10,11 @@ export async function generateMetadata({ params }: { params: Params }) {
 
   const { data } = await getUserProfile(slug);
 
+  const title = `${data?.name}'s Profile | Cursor Directory`;
   return {
-    title: `${data?.name}'s Profile | Cursor Directory`,
+    title,
+    openGraph: { title },
+    twitter: { title },
   };
 }
 

@@ -7,6 +7,14 @@ import { Suspense } from "react";
 export const metadata: Metadata = {
   title: "Companies using Cursor | Cursor Directory",
   description: "A directory of companies that use Cursor.",
+  openGraph: {
+    title: "Companies using Cursor | Cursor Directory",
+    description: "A directory of companies that use Cursor.",
+  },
+  twitter: {
+    title: "Companies using Cursor | Cursor Directory",
+    description: "A directory of companies that use Cursor.",
+  },
 };
 
 export const revalidate = 3600;
