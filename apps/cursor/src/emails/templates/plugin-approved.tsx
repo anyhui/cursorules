@@ -39,7 +39,7 @@ export default function PluginApprovedEmail({
               <Text className="text-sm leading-7 mb-4">Hi {name},</Text>
 
               <Text className="text-sm leading-7 mb-4">
-                Great news — your plugin <strong>{pluginName}</strong> has been
+                Great news! Your plugin <strong>{pluginName}</strong> has been
                 reviewed and approved. It's now live on Cursor Directory and
                 available to 300k+ developers.
               </Text>

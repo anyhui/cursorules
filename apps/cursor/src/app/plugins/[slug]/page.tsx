@@ -15,9 +15,19 @@ export async function generateMetadata({
 
   const { data: plugin } = await getPluginBySlug(slug);
   if (plugin) {
+    const title = `${plugin.name} | Cursor Directory`;
+    const description = plugin.description ?? undefined;
     return {
-      title: `${plugin.name} | Cursor Directory`,
-      description: plugin.description ?? undefined,
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+      },
+      twitter: {
+        title,
+        description,
+      },
     };
   }
 

@@ -7,6 +7,16 @@ export const metadata: Metadata = {
   title: "Submit a Plugin | Cursor Directory",
   description:
     "Submit a plugin to Cursor Directory and reach 300k+ developers.",
+  openGraph: {
+    title: "Submit a Plugin | Cursor Directory",
+    description:
+      "Submit a plugin to Cursor Directory and reach 300k+ developers.",
+  },
+  twitter: {
+    title: "Submit a Plugin | Cursor Directory",
+    description:
+      "Submit a plugin to Cursor Directory and reach 300k+ developers.",
+  },
 };
 
 export default async function Page() {

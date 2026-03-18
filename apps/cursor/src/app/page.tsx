@@ -17,6 +17,16 @@ export const metadata: Metadata = {
   title: "Cursor Directory - Explore What the Community Is Building",
   description:
     "Plugins, MCP servers, events, and thousands of developers building with Cursor.",
+  openGraph: {
+    title: "Cursor Directory - Explore What the Community Is Building",
+    description:
+      "Plugins, MCP servers, events, and thousands of developers building with Cursor.",
+  },
+  twitter: {
+    title: "Cursor Directory - Explore What the Community Is Building",
+    description:
+      "Plugins, MCP servers, events, and thousands of developers building with Cursor.",
+  },
 };
 
 export const dynamic = "force-static";

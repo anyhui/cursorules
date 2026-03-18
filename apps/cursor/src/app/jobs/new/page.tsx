@@ -8,6 +8,16 @@ export const metadata: Metadata = {
   title: "Post a job | Cursor Directory",
   description:
     "Post a job listing on Cursor Directory and reach 300k+ developers.",
+  openGraph: {
+    title: "Post a job | Cursor Directory",
+    description:
+      "Post a job listing on Cursor Directory and reach 300k+ developers.",
+  },
+  twitter: {
+    title: "Post a job | Cursor Directory",
+    description:
+      "Post a job listing on Cursor Directory and reach 300k+ developers.",
+  },
 };
 
 export default async function Page() {

@@ -6,6 +6,14 @@ import Link from "next/link";
 export const metadata = {
   title: "Jobs | Cursor Directory",
   description: "Find jobs at companies building with Cursor.",
+  openGraph: {
+    title: "Jobs | Cursor Directory",
+    description: "Find jobs at companies building with Cursor.",
+  },
+  twitter: {
+    title: "Jobs | Cursor Directory",
+    description: "Find jobs at companies building with Cursor.",
+  },
 };
 
 export const revalidate = 3600;

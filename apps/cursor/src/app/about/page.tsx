@@ -1,6 +1,14 @@
 export const metadata = {
   title: "About Cursor Directory",
   description: "Why we built Cursor Directory",
+  openGraph: {
+    title: "About Cursor Directory",
+    description: "Why we built Cursor Directory",
+  },
+  twitter: {
+    title: "About Cursor Directory",
+    description: "Why we built Cursor Directory",
+  },
 };
 
 export default function About() {
