@@ -1,5 +1,6 @@
 import { PluginDetailView } from "@/components/plugins/plugin-detail";
 import { getPluginBySlug, getPlugins } from "@/data/queries";
+import { getSession } from "@/utils/supabase/auth";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -33,6 +34,13 @@ export default async function Page({ params }: { params: Params }) {
 
   const { data: plugin } = await getPluginBySlug(slug);
   if (!plugin) notFound();
+
+  if (!plugin.active) {
+    const session = await getSession();
+    if (!session || plugin.owner_id !== session.user.id) {
+      notFound();
+    }
+  }
 
   return <PluginDetailView plugin={plugin} />;
 }
