@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/admin-client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ActionError } from "./safe-action";

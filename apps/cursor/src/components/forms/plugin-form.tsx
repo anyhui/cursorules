@@ -20,12 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertCircle,
   Check,
-  ChevronDown,
   Github,
   Loader2,
   Plus,
@@ -113,8 +111,8 @@ export function PluginForm() {
   const [editedDescription, setEditedDescription] = useState("");
   const [parseError, setParseError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
-  const [expandedComponent, setExpandedComponent] = useState<string | null>(
-    null,
+  const [editedComponents, setEditedComponents] = useState<ManualComponent[]>(
+    [],
   );
 
   const [manualName, setManualName] = useState("");
@@ -139,6 +137,15 @@ export function PluginForm() {
           setParsed(data);
           setEditedName(data.name);
           setEditedDescription(data.description);
+          setEditedComponents(
+            data.components.map((c) => ({
+              id: crypto.randomUUID(),
+              type: c.type as ManualComponent["type"],
+              name: c.name,
+              description: c.description ?? "",
+              content: c.content ?? "",
+            })),
+          );
           setParseError(null);
         }
       },
@@ -179,6 +186,12 @@ export function PluginForm() {
     if (!parsed) return;
     setPublishError(null);
 
+    const validComponents = editedComponents.filter((c) => c.name.trim());
+    if (validComponents.length === 0) {
+      setPublishError("At least one component with a name is required.");
+      return;
+    }
+
     executeCreate({
       name: editedName || parsed.name,
       description: editedDescription || parsed.description,
@@ -186,13 +199,13 @@ export function PluginForm() {
       repository: parsed.repository,
       homepage: parsed.homepage ?? null,
       keywords: parsed.keywords,
-      components: parsed.components.map((c) => ({
+      components: validComponents.map((c) => ({
         type: c.type as any,
-        name: c.name,
-        slug: c.slug,
-        description: c.description,
-        content: c.content,
-        metadata: c.metadata,
+        name: c.name.trim(),
+        slug: slugify(c.name),
+        description: c.description.trim() || undefined,
+        content: c.content.trim() || undefined,
+        metadata: {},
       })),
     });
   };
@@ -250,19 +263,26 @@ export function PluginForm() {
     );
   };
 
-  const componentsByType = parsed
-    ? Object.entries(
-        parsed.components.reduce(
-          (acc, c) => {
-            const key = c.type;
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(c);
-            return acc;
-          },
-          {} as Record<string, ParsedComponent[]>,
-        ),
-      )
-    : [];
+  const addAutoComponent = () => {
+    setEditedComponents((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), type: "rule", name: "", description: "", content: "" },
+    ]);
+  };
+
+  const removeAutoComponent = (id: string) => {
+    setEditedComponents((prev) => prev.filter((c) => c.id !== id));
+  };
+
+  const updateAutoComponent = (
+    id: string,
+    field: keyof ManualComponent,
+    value: string,
+  ) => {
+    setEditedComponents((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, [field]: value } : c)),
+    );
+  };
 
   const manualFormValid =
     manualName.trim().length >= 2 &&
@@ -384,58 +404,117 @@ export function PluginForm() {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Check className="size-3.5 text-emerald-500" />
-                    <p className="text-sm text-muted-foreground">
-                      Found {parsed.components.length}{" "}
-                      {parsed.components.length === 1
-                        ? "component"
-                        : "components"}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Check className="size-3.5 text-emerald-500" />
+                      <p className="text-sm text-muted-foreground">
+                        {editedComponents.length}{" "}
+                        {editedComponents.length === 1
+                          ? "component"
+                          : "components"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={addAutoComponent}
+                      className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    >
+                      <Plus className="size-3" />
+                      Add
+                    </button>
                   </div>
 
-                  {componentsByType.map(([type, components]) => (
-                    <div key={type} className="space-y-1.5">
-                      <p className="text-xs font-mono uppercase tracking-wider text-text-tertiary">
-                        {COMPONENT_LABELS[type] ?? type} ({components.length})
-                      </p>
-                      {components.map((comp) => {
-                        const isExpanded =
-                          expandedComponent === `${type}:${comp.slug}`;
-                        return (
-                          <div
-                            key={`${type}:${comp.slug}`}
-                            className="overflow-hidden rounded-lg border border-border bg-card shadow-cursor"
+                  {editedComponents.map((comp, index) => (
+                    <div
+                      key={comp.id}
+                      className="space-y-3 rounded-lg border border-border bg-card p-4 shadow-cursor"
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                          Component {index + 1}
+                        </p>
+                        {editedComponents.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeAutoComponent(comp.id)}
+                            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-red-500/10 hover:text-red-400"
                           >
-                            <button
-                              type="button"
-                              className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-accent"
-                              onClick={() =>
-                                setExpandedComponent(
-                                  isExpanded ? null : `${type}:${comp.slug}`,
-                                )
-                              }
-                            >
-                              <span className="text-sm">{comp.name}</span>
-                              <ChevronDown
-                                className={cn(
-                                  "size-3.5 text-muted-foreground transition-transform",
-                                  isExpanded && "rotate-180",
-                                )}
-                              />
-                            </button>
-                            {isExpanded && comp.content && (
-                              <div className="border-t border-border bg-editor p-3">
-                                <code className="block max-h-48 overflow-y-auto whitespace-pre-wrap text-xs leading-6 text-muted-foreground">
-                                  {comp.content.slice(0, 2000)}
-                                  {(comp.content?.length ?? 0) > 2000 &&
-                                    "\n..."}
-                                </code>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="mb-1.5 block text-sm font-medium">
+                            Type
+                          </label>
+                          <Select
+                            value={comp.type}
+                            onValueChange={(v) =>
+                              updateAutoComponent(comp.id, "type", v)
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {COMPONENT_TYPES.map((t) => (
+                                <SelectItem key={t} value={t}>
+                                  {COMPONENT_LABELS[t]}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="mb-1.5 block text-sm font-medium">
+                            Name
+                          </label>
+                          <Input
+                            value={comp.name}
+                            onChange={(e) =>
+                              updateAutoComponent(comp.id, "name", e.target.value)
+                            }
+                            placeholder="my-rule"
+                            className="border-border placeholder:text-[#878787]"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-sm font-medium">
+                          Description
+                          <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+                        </label>
+                        <Input
+                          value={comp.description}
+                          onChange={(e) =>
+                            updateAutoComponent(
+                              comp.id,
+                              "description",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="What this component does"
+                          className="border-border placeholder:text-[#878787]"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-sm font-medium">
+                          Content
+                        </label>
+                        <Textarea
+                          value={comp.content}
+                          onChange={(e) =>
+                            updateAutoComponent(
+                              comp.id,
+                              "content",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Paste or write the component content here..."
+                          className="min-h-[100px] border-border font-mono text-sm placeholder:text-[#878787] placeholder:font-sans"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>
