@@ -6,10 +6,10 @@ import type { PluginRow } from "@/data/queries";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { PluginIconFallback } from "./plugin-icon";
-import { ChevronDown, Pencil } from "lucide-react";
+import { Check, ChevronDown, Copy, Pencil } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StarButton } from "./star-button";
 
 function buildRuleDeepLink(name: string, content: string) {
@@ -318,12 +318,47 @@ function McpSection({
                   <ExternalLinkIcon />
                 </Link>
               )}
-              {installLink && <CursorDeepLink mcp_link={installLink} />}
+              {installLink ? (
+                <CursorDeepLink mcp_link={installLink} />
+              ) : mcp.content ? (
+                <CopyButton text={mcp.content} />
+              ) : null}
             </div>
           </div>
         );
       })}
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [text]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="flex shrink-0 items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {copied ? (
+        <>
+          <Check className="size-3" />
+          Copied
+        </>
+      ) : (
+        <>
+          <Copy className="size-3" />
+          Copy
+        </>
+      )}
+    </button>
   );
 }
 
@@ -345,13 +380,17 @@ function GenericComponentSection({
             <CardContent className="p-4 space-y-2">
               <div className="flex items-center justify-between gap-4">
                 <h3 className="text-sm font-medium">{comp.name}</h3>
-                {type === "command" && comp.content && (
-                  <a
-                    href={buildCommandDeepLink(comp.slug, comp.content)}
-                    className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Add to Cursor
-                  </a>
+                {comp.content && (
+                  type === "command" ? (
+                    <a
+                      href={buildCommandDeepLink(comp.slug, comp.content)}
+                      className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      Add to Cursor
+                    </a>
+                  ) : (
+                    <CopyButton text={comp.content} />
+                  )
                 )}
               </div>
               {comp.description && (
