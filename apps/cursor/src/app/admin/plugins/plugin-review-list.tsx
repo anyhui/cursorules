@@ -6,7 +6,8 @@ import {
 } from "@/actions/review-plugin";
 import { Button } from "@/components/ui/button";
 import type { PluginRow } from "@/data/queries";
-import { Check, Loader2, Trash2 } from "lucide-react";
+import { Check, ExternalLink, Loader2, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -52,7 +53,14 @@ function PluginReviewCard({ plugin }: { plugin: PluginRow }) {
     <div className="rounded-lg border border-border bg-card p-5 shadow-cursor">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-medium">{plugin.name}</h3>
+          <Link
+            href={`/plugins/${plugin.slug}`}
+            target="_blank"
+            className="group flex items-center gap-1.5 truncate text-sm font-medium hover:underline"
+          >
+            {plugin.name}
+            <ExternalLink className="size-3 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+          </Link>
           {plugin.description && (
             <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
               {plugin.description}
