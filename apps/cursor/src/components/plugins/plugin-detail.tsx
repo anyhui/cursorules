@@ -103,7 +103,7 @@ export function PluginDetailView({
         {!plugin.active && (
           <div className="mb-6 flex items-center gap-2 rounded-lg border border-yellow-500/30 bg-yellow-500/5 px-4 py-3">
             <span className="text-sm text-yellow-600 dark:text-yellow-400">
-              Under review — this plugin is only visible to you until it's approved.
+              Under review — this plugin is pending approval.
             </span>
           </div>
         )}
