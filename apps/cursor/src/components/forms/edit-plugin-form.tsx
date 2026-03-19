@@ -16,6 +16,7 @@ import { AlertCircle, Loader2, Plus, Trash2 } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
+import UploadLogo from "../upload-logo";
 
 const COMPONENT_TYPES = [
   "rule",
@@ -55,6 +56,7 @@ function slugify(value: string) {
 export function EditPluginForm({ data }: { data: PluginRow }) {
   const [name, setName] = useState(data.name);
   const [description, setDescription] = useState(data.description ?? "");
+  const [logo, setLogo] = useState<string | null>(data.logo);
   const [repository, setRepository] = useState(data.repository ?? "");
   const [homepage, setHomepage] = useState(data.homepage ?? "");
   const [keywords, setKeywords] = useState(data.keywords.join(", "));
@@ -128,7 +130,7 @@ export function EditPluginForm({ data }: { data: PluginRow }) {
       id: data.id,
       name: name.trim(),
       description: description.trim(),
-      logo: data.logo,
+      logo,
       repository: repository.trim() || null,
       homepage: homepage.trim() || null,
       keywords: keywords
@@ -154,6 +156,17 @@ export function EditPluginForm({ data }: { data: PluginRow }) {
   return (
     <div className="space-y-6">
       <div className="space-y-6">
+        <div>
+          <label className="mb-1.5 block text-sm font-medium">
+            Logo
+            <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+          </label>
+          <UploadLogo
+            prefix="plugins"
+            onUpload={setLogo}
+            image={logo}
+          />
+        </div>
         <div>
           <label className="mb-1.5 block text-sm font-medium">Name</label>
           <Input

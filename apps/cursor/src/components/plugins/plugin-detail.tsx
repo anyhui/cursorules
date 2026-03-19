@@ -12,6 +12,39 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { StarButton } from "./star-button";
 
+function isValidImageUrl(url: string | null): url is string {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function PluginLogo({ logo, name, size = 40 }: { logo: string | null; name: string; size?: number }) {
+  const [error, setError] = useState(false);
+  const validUrl = isValidImageUrl(logo);
+
+  if (!validUrl || error) {
+    return <PluginIconFallback size={size} />;
+  }
+
+  return (
+    <Image
+      src={logo}
+      alt={`${name} logo`}
+      width={size}
+      height={size}
+      className={cn(
+        "rounded-lg border border-border bg-card p-1",
+        logo.endsWith(".svg") && "invert",
+      )}
+      onError={() => setError(true)}
+    />
+  );
+}
+
 function buildRuleDeepLink(name: string, content: string) {
   return `cursor://anysphere.cursor-deeplink/rule?name=${encodeURIComponent(name)}&text=${encodeURIComponent(content)}`;
 }
@@ -75,20 +108,7 @@ export function PluginDetailView({
           </div>
         )}
         <div className="mb-6 flex items-center gap-4">
-          {plugin.logo ? (
-            <Image
-              src={plugin.logo}
-              alt={`${plugin.name} logo`}
-              width={40}
-              height={40}
-              className={cn(
-                "rounded-lg border border-border bg-card p-1",
-                plugin.logo.endsWith(".svg") && "invert",
-              )}
-            />
-          ) : (
-            <PluginIconFallback size={40} />
-          )}
+          <PluginLogo logo={plugin.logo} name={plugin.name} size={40} />
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-semibold tracking-tight">{plugin.name}</h1>
@@ -168,6 +188,8 @@ export function PluginDetailView({
             ))}
           </div>
         )}
+
+        {/* CLI install section hidden for now */}
 
         {componentTypes.length > 1 && (
           <div className="mb-6 flex items-center gap-2">
@@ -274,6 +296,41 @@ function RulesSection({
   );
 }
 
+function resolveMcpConfig(
+  content: string | null,
+  meta: Record<string, unknown>,
+): { name: string; config: Record<string, unknown> } | null {
+  // Try content first, then metadata.config
+  let parsed: Record<string, unknown> | null = null;
+
+  if (content) {
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      return null;
+    }
+  } else {
+    const cfg = (meta?.config as Record<string, unknown>) ?? {};
+    if (cfg.mcpServers) {
+      parsed = { mcpServers: cfg.mcpServers } as Record<string, unknown>;
+    }
+  }
+
+  if (!parsed) return null;
+
+  // Unwrap mcpServers wrapper if present
+  const servers = parsed.mcpServers as Record<string, unknown> | undefined;
+  if (servers && typeof servers === "object") {
+    const keys = Object.keys(servers);
+    if (keys.length > 0) {
+      return { name: keys[0], config: servers[keys[0]] as Record<string, unknown> };
+    }
+  }
+
+  // Content is already a raw config (no mcpServers wrapper)
+  return { name: (meta?.name as string) ?? "server", config: parsed };
+}
+
 function McpSection({
   mcps,
 }: {
@@ -287,12 +344,10 @@ function McpSection({
         const mcpLink = meta?.mcp_link as string | undefined;
 
         let installLink = mcpLink ?? null;
-        if (!installLink && mcp.content) {
-          try {
-            JSON.parse(mcp.content);
-            installLink = buildMCPInstallDeepLink(mcp.name, mcp.content);
-          } catch {
-            // content is not valid JSON, skip
+        if (!installLink) {
+          const resolved = resolveMcpConfig(mcp.content, meta);
+          if (resolved) {
+            installLink = buildMCPInstallDeepLink(resolved.name, JSON.stringify(resolved.config));
           }
         }
 
@@ -359,6 +414,227 @@ function CopyButton({ text }: { text: string }) {
         </>
       )}
     </button>
+  );
+}
+
+function hasInstallableComponents(
+  components: NonNullable<PluginRow["plugin_components"]>,
+): boolean {
+  return components.some(isComponentInstallable);
+}
+
+const PACKAGE_RUNNERS = ["npx", "bunx", "pnpm dlx"] as const;
+type PackageRunner = (typeof PACKAGE_RUNNERS)[number];
+
+const STORAGE_KEY = "install-plugin-runner";
+
+function getStoredRunner(): PackageRunner {
+  if (typeof window === "undefined") return "npx";
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored && PACKAGE_RUNNERS.includes(stored as PackageRunner)) {
+    return stored as PackageRunner;
+  }
+  return "npx";
+}
+
+function isComponentInstallable(c: NonNullable<PluginRow["plugin_components"]>[number]): boolean {
+  if (c.content) return true;
+  if (c.type === "mcp_server") {
+    const meta = c.metadata as Record<string, unknown>;
+    const config = meta?.config as Record<string, unknown> | undefined;
+    return !!config?.mcpServers;
+  }
+  return false;
+}
+
+function CliInstallCommand({
+  slug,
+  components,
+}: {
+  slug: string;
+  components: NonNullable<PluginRow["plugin_components"]>;
+}) {
+  const installable = components.filter(isComponentInstallable);
+  const [runner, setRunner] = useState<PackageRunner>("npx");
+  const [copied, setCopied] = useState(false);
+  const [runnerOpen, setRunnerOpen] = useState(false);
+  const [listExpanded, setListExpanded] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(installable.map((c) => c.slug)),
+  );
+
+  useEffect(() => {
+    setRunner(getStoredRunner());
+  }, []);
+
+  const allSelected = selected.size === installable.length;
+  const noneSelected = selected.size === 0;
+
+  const command = allSelected
+    ? `${runner} install-plugin ${slug}`
+    : `${runner} install-plugin ${slug} --only ${[...selected].join(",")}`;
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(command).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [command]);
+
+  const handleSelectRunner = useCallback((r: PackageRunner) => {
+    setRunner(r);
+    setRunnerOpen(false);
+    localStorage.setItem(STORAGE_KEY, r);
+  }, []);
+
+  const toggleComponent = useCallback((compSlug: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(compSlug)) {
+        next.delete(compSlug);
+      } else {
+        next.add(compSlug);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    if (allSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(installable.map((c) => c.slug)));
+    }
+  }, [allSelected, installable]);
+
+  return (
+    <div className="mb-10">
+      <h2 className="section-eyebrow mb-3">Install via CLI</h2>
+      <div className="rounded-lg border border-border bg-editor">
+        <div className="flex items-stretch">
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setRunnerOpen((v) => !v)}
+              className="flex h-full items-center gap-1.5 border-r border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {runner}
+              <ChevronDown className={cn("size-3 transition-transform", runnerOpen && "rotate-180")} />
+            </button>
+            {runnerOpen && (
+              <div className="absolute left-0 top-full z-10 mt-1 min-w-[120px] rounded-md border border-border bg-popover py-1 shadow-md">
+                {PACKAGE_RUNNERS.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => handleSelectRunner(r)}
+                    className={cn(
+                      "flex w-full items-center px-3 py-1.5 text-left text-xs transition-colors hover:bg-accent",
+                      r === runner ? "text-foreground font-medium" : "text-muted-foreground",
+                    )}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="group flex flex-1 items-center gap-3 min-w-0 px-4 py-3 text-left"
+          >
+            <code className="truncate text-sm text-foreground">{command}</code>
+          </button>
+          <div className="flex items-center gap-2 shrink-0 pr-3">
+            <span className="text-xs text-muted-foreground">
+              {selected.size}/{installable.length}
+            </span>
+            {copied ? (
+              <Check className="size-3.5 text-green-500" />
+            ) : (
+              <button
+                type="button"
+                onClick={handleCopy}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Copy className="size-3.5" />
+              </button>
+            )}
+            {installable.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setListExpanded((v) => !v)}
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ChevronDown className={cn("size-3.5 transition-transform", listExpanded && "rotate-180")} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {listExpanded && installable.length > 1 && (
+          <div className="border-t border-border px-4 py-2 space-y-0.5">
+            <button
+              type="button"
+              onClick={toggleAll}
+              className="flex w-full items-center gap-2 rounded px-1 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span
+                className={cn(
+                  "flex size-3.5 shrink-0 items-center justify-center rounded-sm border",
+                  allSelected
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-muted-foreground",
+                )}
+              >
+                {allSelected && <Check className="size-2.5" />}
+              </span>
+              <span>{allSelected ? "Deselect all" : "Select all"}</span>
+            </button>
+            <div className="h-px bg-border my-1" />
+            {installable.map((comp) => {
+              const checked = selected.has(comp.slug);
+              const typeLabel = COMPONENT_LABELS[comp.type as ComponentType] ?? comp.type;
+              return (
+                <button
+                  key={comp.slug}
+                  type="button"
+                  onClick={() => toggleComponent(comp.slug)}
+                  className="flex w-full items-center gap-2 rounded px-1 py-1 text-left text-xs transition-colors hover:bg-accent"
+                >
+                  <span
+                    className={cn(
+                      "flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-colors",
+                      checked
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-muted-foreground",
+                    )}
+                  >
+                    {checked && <Check className="size-2.5" />}
+                  </span>
+                  <span
+                    className={cn(
+                      "shrink-0 rounded border border-border px-1 py-0.5 font-mono text-[10px] text-muted-foreground",
+                    )}
+                  >
+                    {typeLabel}
+                  </span>
+                  <span className={cn("truncate", checked ? "text-foreground" : "text-muted-foreground")}>
+                    {comp.name}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+      {noneSelected && (
+        <p className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
+          No components selected. Select at least one to install.
+        </p>
+      )}
+    </div>
   );
 }
 

@@ -19,6 +19,16 @@ export type PluginCardData = {
 
 const isSvgLogo = (url: string) => url.endsWith(".svg");
 
+function isValidImageUrl(url: string | null | undefined): url is string {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 
 export function PluginCard({ plugin }: { plugin: PluginCardData }) {
   return (
@@ -26,7 +36,7 @@ export function PluginCard({ plugin }: { plugin: PluginCardData }) {
       <Card className="h-[156px] overflow-hidden border-border bg-transparent transition-colors hover:border-input hover:bg-transparent">
         <CardContent className="flex flex-col gap-3 p-4 h-full">
           <div className="flex items-center gap-3">
-            {plugin.logo ? (
+            {isValidImageUrl(plugin.logo) ? (
               <Avatar className="size-9 rounded-[4px] flex-shrink-0 border border-border bg-muted">
                 <AvatarImage
                   src={plugin.logo}
