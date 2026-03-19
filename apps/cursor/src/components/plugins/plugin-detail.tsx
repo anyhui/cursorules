@@ -12,6 +12,39 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { StarButton } from "./star-button";
 
+function isValidImageUrl(url: string | null): url is string {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "https:" || parsed.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function PluginLogo({ logo, name, size = 40 }: { logo: string | null; name: string; size?: number }) {
+  const [error, setError] = useState(false);
+  const validUrl = isValidImageUrl(logo);
+
+  if (!validUrl || error) {
+    return <PluginIconFallback size={size} />;
+  }
+
+  return (
+    <Image
+      src={logo}
+      alt={`${name} logo`}
+      width={size}
+      height={size}
+      className={cn(
+        "rounded-lg border border-border bg-card p-1",
+        logo.endsWith(".svg") && "invert",
+      )}
+      onError={() => setError(true)}
+    />
+  );
+}
+
 function buildRuleDeepLink(name: string, content: string) {
   return `cursor://anysphere.cursor-deeplink/rule?name=${encodeURIComponent(name)}&text=${encodeURIComponent(content)}`;
 }
@@ -75,20 +108,7 @@ export function PluginDetailView({
           </div>
         )}
         <div className="mb-6 flex items-center gap-4">
-          {plugin.logo ? (
-            <Image
-              src={plugin.logo}
-              alt={`${plugin.name} logo`}
-              width={40}
-              height={40}
-              className={cn(
-                "rounded-lg border border-border bg-card p-1",
-                plugin.logo.endsWith(".svg") && "invert",
-              )}
-            />
-          ) : (
-            <PluginIconFallback size={40} />
-          )}
+          <PluginLogo logo={plugin.logo} name={plugin.name} size={40} />
           <div className="flex-1">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-semibold tracking-tight">{plugin.name}</h1>
