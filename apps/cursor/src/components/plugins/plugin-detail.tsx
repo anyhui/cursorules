@@ -189,9 +189,7 @@ export function PluginDetailView({
           </div>
         )}
 
-        {hasInstallableComponents(components) && (
-          <CliInstallCommand slug={plugin.slug} components={components} />
-        )}
+        {/* CLI install section hidden for now */}
 
         {componentTypes.length > 1 && (
           <div className="mb-6 flex items-center gap-2">

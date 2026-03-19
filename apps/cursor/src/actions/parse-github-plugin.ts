@@ -459,12 +459,24 @@ export const parseGitHubPluginAction = authActionClient
 
     const author = manifest.author as Record<string, string> | undefined;
 
+    let logo: string | undefined;
+    if (typeof manifest.logo === "string" && manifest.logo) {
+      try {
+        const parsed = new URL(manifest.logo);
+        if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+          logo = manifest.logo;
+        }
+      } catch {
+        logo = `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${manifest.logo.replace(/^\.?\//, "")}`;
+      }
+    }
+
     const result: ParsedPlugin = {
       name: (manifest.name as string) || repo,
       description:
         (manifest.description as string) || `${repo} plugin for Cursor`,
       version: (manifest.version as string) || "1.0.0",
-      logo: manifest.logo as string | undefined,
+      logo,
       homepage: (manifest.homepage as string) || undefined,
       repository: `https://github.com/${owner}/${repo}`,
       license: manifest.license as string | undefined,

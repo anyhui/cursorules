@@ -35,6 +35,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import UploadLogo from "../upload-logo";
 
 const COMPONENT_TYPES = [
   "rule",
@@ -115,8 +116,11 @@ export function PluginForm() {
     [],
   );
 
+  const [autoLogo, setAutoLogo] = useState<string | null>(null);
+
   const [manualName, setManualName] = useState("");
   const [manualDescription, setManualDescription] = useState("");
+  const [manualLogo, setManualLogo] = useState<string | null>(null);
   const [manualRepository, setManualRepository] = useState("");
   const [manualHomepage, setManualHomepage] = useState("");
   const [manualKeywords, setManualKeywords] = useState("");
@@ -195,7 +199,7 @@ export function PluginForm() {
     executeCreate({
       name: editedName || parsed.name,
       description: editedDescription || parsed.description,
-      logo: parsed.logo ?? null,
+      logo: autoLogo ?? parsed.logo ?? null,
       repository: parsed.repository,
       homepage: parsed.homepage ?? null,
       keywords: parsed.keywords,
@@ -224,7 +228,7 @@ export function PluginForm() {
     executeCreate({
       name: manualName.trim(),
       description: manualDescription.trim(),
-      logo: null,
+      logo: manualLogo,
       repository: manualRepository.trim() || null,
       homepage: manualHomepage.trim() || null,
       keywords: manualKeywords
@@ -364,6 +368,17 @@ export function PluginForm() {
             {parsed && (
               <div className="space-y-6">
                 <div className="space-y-6">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium">
+                      Logo
+                      <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+                    </label>
+                    <UploadLogo
+                      prefix="plugins"
+                      onUpload={setAutoLogo}
+                      image={autoLogo ?? parsed.logo}
+                    />
+                  </div>
                   <div>
                     <label className="mb-1.5 block text-sm font-medium">
                       Name
@@ -565,6 +580,17 @@ export function PluginForm() {
         <TabsContent value="manual" className="mt-6">
           <div className="space-y-6">
             <div className="space-y-6">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  Logo
+                  <span className="ml-1 font-normal text-muted-foreground">(optional)</span>
+                </label>
+                <UploadLogo
+                  prefix="plugins"
+                  onUpload={setManualLogo}
+                  image={manualLogo}
+                />
+              </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium">
                   Name
