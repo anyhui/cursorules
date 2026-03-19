@@ -6,7 +6,7 @@ import type { PluginRow } from "@/data/queries";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { PluginIconFallback } from "./plugin-icon";
-import { Check, ChevronDown, Copy, Pencil, Terminal } from "lucide-react";
+import { Check, ChevronDown, Copy, Pencil } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -493,7 +493,6 @@ function CliInstallCommand({
             onClick={handleCopy}
             className="group flex flex-1 items-center gap-3 min-w-0 px-4 py-3 text-left"
           >
-            <Terminal className="size-4 shrink-0 text-muted-foreground" />
             <code className="truncate text-sm text-foreground">{command}</code>
           </button>
           <div className="flex items-center gap-2 shrink-0 pr-3">

@@ -3,6 +3,7 @@ import { getPluginBySlug, getPlugins } from "@/data/queries";
 import { isAdmin } from "@/utils/admin";
 import { getSession } from "@/utils/supabase/auth";
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 
 type Params = Promise<{ slug: string }>;
@@ -40,6 +41,18 @@ export async function generateStaticParams() {
   return (plugins ?? []).map((p) => ({ slug: p.slug }));
 }
 
+async function canViewInactivePlugin(ownerId: string | null): Promise<boolean> {
+  try {
+    await cookies();
+    const session = await getSession();
+    const userId = session?.user.id;
+    if (!userId) return false;
+    return ownerId === userId || isAdmin(userId);
+  } catch {
+    return false;
+  }
+}
+
 export default async function Page({ params }: { params: Params }) {
   const { slug } = await params;
 
@@ -47,11 +60,8 @@ export default async function Page({ params }: { params: Params }) {
   if (!plugin) notFound();
 
   if (!plugin.active) {
-    const session = await getSession();
-    const userId = session?.user.id;
-    if (!userId || (plugin.owner_id !== userId && !isAdmin(userId))) {
-      notFound();
-    }
+    const allowed = await canViewInactivePlugin(plugin.owner_id);
+    if (!allowed) notFound();
   }
 
   return <PluginDetailView plugin={plugin} />;

@@ -443,20 +443,32 @@ export async function getPendingPlugins({
   since,
 }: { since?: string } = {}) {
   const supabase = await createClient();
+  const PAGE_SIZE = 100;
+  let allData: PluginRow[] = [];
+  let from = 0;
 
-  let query = supabase
-    .from("plugins")
-    .select("*, plugin_components(*)")
-    .eq("active", false)
-    .order("created_at", { ascending: false });
+  while (true) {
+    let query = supabase
+      .from("plugins")
+      .select("*, plugin_components(*)")
+      .eq("active", false)
+      .order("created_at", { ascending: false })
+      .range(from, from + PAGE_SIZE - 1);
 
-  if (since) {
-    query = query.gte("created_at", since);
+    if (since) {
+      query = query.gte("created_at", since);
+    }
+
+    const { data, error } = await query;
+    if (error) return { data: allData.length ? allData : null, error };
+    if (!data || data.length === 0) break;
+
+    allData = allData.concat(data as PluginRow[]);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
   }
 
-  const { data, error } = await query;
-
-  return { data: data as PluginRow[] | null, error };
+  return { data: allData as PluginRow[], error: null };
 }
 
 export async function getStarredPlugins(userId: string) {
