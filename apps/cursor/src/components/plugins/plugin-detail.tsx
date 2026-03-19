@@ -278,6 +278,41 @@ function RulesSection({
   );
 }
 
+function resolveMcpConfig(
+  content: string | null,
+  meta: Record<string, unknown>,
+): { name: string; config: Record<string, unknown> } | null {
+  // Try content first, then metadata.config
+  let parsed: Record<string, unknown> | null = null;
+
+  if (content) {
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      return null;
+    }
+  } else {
+    const cfg = (meta?.config as Record<string, unknown>) ?? {};
+    if (cfg.mcpServers) {
+      parsed = { mcpServers: cfg.mcpServers } as Record<string, unknown>;
+    }
+  }
+
+  if (!parsed) return null;
+
+  // Unwrap mcpServers wrapper if present
+  const servers = parsed.mcpServers as Record<string, unknown> | undefined;
+  if (servers && typeof servers === "object") {
+    const keys = Object.keys(servers);
+    if (keys.length > 0) {
+      return { name: keys[0], config: servers[keys[0]] as Record<string, unknown> };
+    }
+  }
+
+  // Content is already a raw config (no mcpServers wrapper)
+  return { name: (meta?.name as string) ?? "server", config: parsed };
+}
+
 function McpSection({
   mcps,
 }: {
@@ -291,12 +326,10 @@ function McpSection({
         const mcpLink = meta?.mcp_link as string | undefined;
 
         let installLink = mcpLink ?? null;
-        if (!installLink && mcp.content) {
-          try {
-            JSON.parse(mcp.content);
-            installLink = buildMCPInstallDeepLink(mcp.name, mcp.content);
-          } catch {
-            // content is not valid JSON, skip
+        if (!installLink) {
+          const resolved = resolveMcpConfig(mcp.content, meta);
+          if (resolved) {
+            installLink = buildMCPInstallDeepLink(resolved.name, JSON.stringify(resolved.config));
           }
         }
 
