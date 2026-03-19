@@ -115,7 +115,7 @@ export async function getUserPlugins(userId: string) {
     .select("*, plugin_components(*)")
     .eq("owner_id", userId)
     .eq("active", true)
-    .order("star_count", { ascending: false })
+    .order("install_count", { ascending: false })
     .order("created_at", { ascending: false });
 
   return { data: data as PluginRow[] | null, error };
@@ -429,7 +429,7 @@ export async function getFeaturedPlugins({
     .select("*, plugin_components(*)")
     .limit(100)
     .order("order", { ascending: false })
-    .order("star_count", { ascending: false })
+    .order("install_count", { ascending: false })
     .eq("active", true)
     .or(onlyPremium ? "plan.eq.premium" : "plan.eq.featured,plan.eq.premium");
 

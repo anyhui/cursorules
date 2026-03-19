@@ -19,7 +19,7 @@ export async function GET() {
             tags: (meta?.tags as string[]) ?? [],
             libs: (meta?.libs as string[]) ?? [],
             content: c.content ?? "",
-            count: p.star_count,
+            count: p.install_count,
             author: meta?.author_name
               ? {
                   name: meta.author_name as string,

@@ -76,7 +76,7 @@ export function PluginList({
     }
 
     if (sort !== "recent") {
-      result = [...result].sort((a, b) => (b.starCount ?? 0) - (a.starCount ?? 0));
+      result = [...result].sort((a, b) => (b.installCount ?? 0) - (a.installCount ?? 0));
     }
 
     return result;

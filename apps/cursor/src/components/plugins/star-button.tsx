@@ -1,7 +1,7 @@
 "use client";
 
 import { starPluginAction } from "@/actions/star-plugin";
-import { cn, formatCount } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { Star } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
@@ -76,7 +76,6 @@ export function StarButton({
         disabled
       >
         <Star className="size-3.5" />
-        <span className="text-xs">{formatCount(starCount)}</span>
       </Button>
     );
   }
@@ -95,7 +94,6 @@ export function StarButton({
         <Star
           className={cn("size-3.5", starred && "fill-yellow-500")}
         />
-        <span className="text-xs">{formatCount(count)}</span>
       </Button>
 
       <SignInModal

@@ -1,14 +1,16 @@
 "use client";
 
+import { trackInstallAction } from "@/actions/track-install";
 import { CursorDeepLink } from "@/components/cursor-deeplink";
 import { Card, CardContent } from "@/components/ui/card";
 import type { PluginRow } from "@/data/queries";
-import { cn } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
 import { PluginIconFallback } from "./plugin-icon";
-import { Check, ChevronDown, Copy, Pencil } from "lucide-react";
+import { Check, ChevronDown, Copy, Download, Pencil } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useAction } from "next-safe-action/hooks";
 import { useCallback, useEffect, useState } from "react";
 import { StarButton } from "./star-button";
 
@@ -75,6 +77,7 @@ export function PluginDetailView({
   plugin: PluginRow;
 }) {
   const [isOwner, setIsOwner] = useState(false);
+  const [installCount, setInstallCount] = useState(plugin.install_count);
 
   useEffect(() => {
     const supabase = createClient();
@@ -84,6 +87,13 @@ export function PluginDetailView({
       }
     });
   }, [plugin.owner_id]);
+
+  const { execute: trackInstall } = useAction(trackInstallAction);
+
+  const handleInstall = useCallback(() => {
+    setInstallCount((c) => c + 1);
+    trackInstall({ pluginId: plugin.id });
+  }, [plugin.id, trackInstall]);
 
   const components = plugin.plugin_components ?? [];
   const componentTypes = [...new Set(components.map((c) => c.type))] as ComponentType[];
@@ -113,6 +123,10 @@ export function PluginDetailView({
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-semibold tracking-tight">{plugin.name}</h1>
               <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
+                  <Download className="size-3.5" />
+                  <span className="text-xs">{formatCount(installCount)}</span>
+                </span>
                 {isOwner && (
                   <Link
                     href={`/plugins/${plugin.slug}/edit`}
@@ -217,15 +231,16 @@ export function PluginDetailView({
             rules={rules}
             expandedRule={expandedRule}
             setExpandedRule={setExpandedRule}
+            onInstall={handleInstall}
           />
         )}
 
         {activeTab === "mcp_server" && mcps.length > 0 && (
-          <McpSection mcps={mcps} />
+          <McpSection mcps={mcps} onInstall={handleInstall} />
         )}
 
         {activeTab !== "rule" && activeTab !== "mcp_server" && activeComponents.length > 0 && (
-          <GenericComponentSection components={activeComponents} type={activeTab} />
+          <GenericComponentSection components={activeComponents} type={activeTab} onInstall={handleInstall} />
         )}
       </div>
     </div>
@@ -236,10 +251,12 @@ function RulesSection({
   rules,
   expandedRule,
   setExpandedRule,
+  onInstall,
 }: {
   rules: NonNullable<PluginRow["plugin_components"]>;
   expandedRule: string | null;
   setExpandedRule: (slug: string | null) => void;
+  onInstall: () => void;
 }) {
   return (
     <div>
@@ -273,7 +290,10 @@ function RulesSection({
                 <a
                   href={buildRuleDeepLink(rule.slug, rule.content ?? "")}
                   className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onInstall();
+                  }}
                 >
                   Add to Cursor
                 </a>
@@ -333,8 +353,10 @@ function resolveMcpConfig(
 
 function McpSection({
   mcps,
+  onInstall,
 }: {
   mcps: NonNullable<PluginRow["plugin_components"]>;
+  onInstall: () => void;
 }) {
   return (
     <div className="space-y-3">
@@ -374,9 +396,9 @@ function McpSection({
                 </Link>
               )}
               {installLink ? (
-                <CursorDeepLink mcp_link={installLink} />
+                <CursorDeepLink mcp_link={installLink} onInstall={onInstall} />
               ) : mcp.content ? (
-                <CopyButton text={mcp.content} />
+                <CopyButton text={mcp.content} onCopy={onInstall} />
               ) : null}
             </div>
           </div>
@@ -386,15 +408,16 @@ function McpSection({
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, onCopy }: { text: string; onCopy?: () => void }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(() => {
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      onCopy?.();
     });
-  }, [text]);
+  }, [text, onCopy]);
 
   return (
     <button
@@ -641,9 +664,11 @@ function CliInstallCommand({
 function GenericComponentSection({
   components,
   type,
+  onInstall,
 }: {
   components: NonNullable<PluginRow["plugin_components"]>;
   type: ComponentType;
+  onInstall: () => void;
 }) {
   return (
     <div>
@@ -661,11 +686,12 @@ function GenericComponentSection({
                     <a
                       href={buildCommandDeepLink(comp.slug, comp.content)}
                       className="shrink-0 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                      onClick={onInstall}
                     >
                       Add to Cursor
                     </a>
                   ) : (
-                    <CopyButton text={comp.content} />
+                    <CopyButton text={comp.content} onCopy={onInstall} />
                   )
                 )}
               </div>

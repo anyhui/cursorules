@@ -51,7 +51,7 @@ function toPluginCard(p: NonNullable<Awaited<ReturnType<typeof getPlugins>>["dat
     rulesCount: components.filter((c) => c.type === "rule").length,
     mcpCount: components.filter((c) => c.type === "mcp_server").length,
     keywords: p.keywords,
-    starCount: p.star_count,
+    installCount: p.install_count,
     href: `/plugins/${p.slug}`,
   };
 }
@@ -84,8 +84,8 @@ export default async function Page() {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const popularPlugins = (allPluginsData ?? [])
-    .filter((p) => p.star_count > 0)
-    .sort((a, b) => b.star_count - a.star_count)
+    .filter((p) => p.install_count > 0)
+    .sort((a, b) => b.install_count - a.install_count)
     .slice(0, 8)
     .map(toPluginCard);
 

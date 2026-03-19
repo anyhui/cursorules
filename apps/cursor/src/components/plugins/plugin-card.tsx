@@ -13,7 +13,7 @@ export type PluginCardData = {
   rulesCount?: number;
   mcpCount?: number;
   keywords?: string[];
-  starCount?: number;
+  installCount?: number;
   href: string;
 };
 
@@ -69,9 +69,9 @@ export function PluginCard({ plugin }: { plugin: PluginCardData }) {
                 {plugin.rulesCount} {plugin.rulesCount === 1 ? "rule" : "rules"}
               </span>
             ) : null}
-            {plugin.starCount ? (
+            {plugin.installCount ? (
               <span className="ml-auto rounded-[4px] border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
-                {formatCount(plugin.starCount)} {plugin.starCount === 1 ? "star" : "stars"}
+                {formatCount(plugin.installCount)} {plugin.installCount === 1 ? "install" : "installs"}
               </span>
             ) : null}
           </div>

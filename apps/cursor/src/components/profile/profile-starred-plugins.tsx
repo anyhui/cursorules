@@ -23,7 +23,7 @@ function toPluginCard(plugin: PluginRow): PluginCardData {
     rulesCount: components.filter((c) => c.type === "rule").length,
     mcpCount: components.filter((c) => c.type === "mcp_server").length,
     keywords: plugin.keywords,
-    starCount: plugin.star_count,
+    installCount: plugin.install_count,
     href: `/plugins/${plugin.slug}`,
   };
 }

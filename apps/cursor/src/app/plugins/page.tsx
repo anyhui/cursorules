@@ -50,7 +50,7 @@ export default async function Page() {
       rulesCount,
       mcpCount,
       keywords: p.keywords,
-      starCount: p.star_count,
+      installCount: p.install_count,
       href: `/plugins/${p.slug}`,
     };
   });
