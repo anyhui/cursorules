@@ -1,0 +1,30 @@
+{
+  "name": "install-plugin",
+  "version": "0.1.0",
+  "description": "Install plugins from the Cursor Directory",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pontusab/directories"
+  },
+  "keywords": ["cursor", "plugin", "cli", "install", "cursor-directory"],
+  "bin": {
+    "install-plugin": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  },
+  "dependencies": {
+    "@clack/prompts": "^1.1.0"
+  }
+}
