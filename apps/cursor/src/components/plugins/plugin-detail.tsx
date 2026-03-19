@@ -92,8 +92,8 @@ export function PluginDetailView({
 
   const handleInstall = useCallback(() => {
     setInstallCount((c) => c + 1);
-    trackInstall({ pluginId: plugin.id });
-  }, [plugin.id, trackInstall]);
+    trackInstall({ pluginId: plugin.id, slug: plugin.slug });
+  }, [plugin.id, plugin.slug, trackInstall]);
 
   const components = plugin.plugin_components ?? [];
   const componentTypes = [...new Set(components.map((c) => c.type))] as ComponentType[];
