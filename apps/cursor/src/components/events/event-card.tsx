@@ -1,15 +1,22 @@
 import { Card } from "@/components/ui/card";
 import type { Event } from "@/lib/luma";
+import { getCountryName } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarDays, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-export function EventCard({ data: { event } }: { data: Event }) {
+export function EventCard({ data: event }: { data: Event }) {
   const eventUrl = `${event.url}?utm_source=cursor.directory`;
   const past = new Date(event.end_at) < new Date();
+  const city = event.geo_address_json?.city;
+  const country = getCountryName(event.geo_address_json?.country);
   const location =
-    event.geo_address_json?.city || event.geo_address_json?.address;
+    city && country
+      ? `${city}, ${country}`
+      : city ||
+        event.geo_address_json?.full_address ||
+        event.geo_address_json?.address;
 
   return (
     <Link href={eventUrl} target="_blank" rel="noopener noreferrer">

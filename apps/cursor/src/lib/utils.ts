@@ -40,5 +40,30 @@ export function generateNameAbbr(name: string): string {
   return match ? match[0].toUpperCase() : "";
 }
 
+const countryDisplayNames =
+  typeof Intl !== "undefined" && typeof Intl.DisplayNames !== "undefined"
+    ? new Intl.DisplayNames(["en"], { type: "region" })
+    : null;
+
+export function getCountryName(value: string | null | undefined): string {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  // Only attempt to resolve values that look like ISO 3166-1 alpha-2 codes.
+  if (/^[A-Za-z]{2}$/.test(trimmed) && countryDisplayNames) {
+    try {
+      const name = countryDisplayNames.of(trimmed.toUpperCase());
+      if (name && name.toUpperCase() !== trimmed.toUpperCase()) {
+        return name;
+      }
+    } catch {
+      // fall through to return original value
+    }
+  }
+
+  return trimmed;
+}
+
 
  

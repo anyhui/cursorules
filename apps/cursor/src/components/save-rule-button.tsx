@@ -58,7 +58,11 @@ export function SaveRuleButton({
 
   async function onSubmit({ fileName }: SaveRuleFormData) {
     try {
-      const directoryHandle = await window.showDirectoryPicker();
+      const directoryHandle = await (
+        window as unknown as {
+          showDirectoryPicker: () => Promise<FileSystemDirectoryHandle>;
+        }
+      ).showDirectoryPicker();
 
       const cursorDirectoryHandle = await directoryHandle.getDirectoryHandle(
         ".cursor",
