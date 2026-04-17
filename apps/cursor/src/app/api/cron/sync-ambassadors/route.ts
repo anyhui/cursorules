@@ -12,14 +12,22 @@ async function fetchAmbassadorEmails(): Promise<string[]> {
   const {
     AIRTABLE_API_KEY,
     AIRTABLE_BASE_ID,
-    AIRTABLE_AMBASSADORS_TABLE = "Ambassadors",
-    AIRTABLE_AMBASSADORS_EMAIL_FIELD = "Email",
+    AIRTABLE_AMBASSADORS_TABLE = "Directory",
+    AIRTABLE_AMBASSADORS_EMAIL_FIELD = "Email,Cursor email",
   } = process.env;
 
   if (!AIRTABLE_API_KEY || !AIRTABLE_BASE_ID) {
     throw new Error(
       "Missing AIRTABLE_API_KEY or AIRTABLE_BASE_ID environment variables",
     );
+  }
+
+  const emailFields = AIRTABLE_AMBASSADORS_EMAIL_FIELD.split(",")
+    .map((f) => f.trim())
+    .filter(Boolean);
+
+  if (emailFields.length === 0) {
+    throw new Error("AIRTABLE_AMBASSADORS_EMAIL_FIELD is empty");
   }
 
   const emails = new Set<string>();
@@ -32,7 +40,9 @@ async function fetchAmbassadorEmails(): Promise<string[]> {
       )}`,
     );
     url.searchParams.set("pageSize", String(PAGE_SIZE));
-    url.searchParams.set("fields[]", AIRTABLE_AMBASSADORS_EMAIL_FIELD);
+    for (const field of emailFields) {
+      url.searchParams.append("fields[]", field);
+    }
     if (offset) url.searchParams.set("offset", offset);
 
     const res = await fetch(url.toString(), {
@@ -55,10 +65,12 @@ async function fetchAmbassadorEmails(): Promise<string[]> {
     };
 
     for (const record of json.records ?? []) {
-      const value = record.fields?.[AIRTABLE_AMBASSADORS_EMAIL_FIELD];
-      if (typeof value === "string") {
-        const trimmed = value.trim().toLowerCase();
-        if (trimmed) emails.add(trimmed);
+      for (const field of emailFields) {
+        const value = record.fields?.[field];
+        if (typeof value === "string") {
+          const trimmed = value.trim().toLowerCase();
+          if (trimmed) emails.add(trimmed);
+        }
       }
     }
 
