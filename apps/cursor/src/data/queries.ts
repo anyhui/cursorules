@@ -6,7 +6,7 @@ export async function getUserProfile(slug: string, userId?: string) {
   const query = supabase
     .from("users")
     .select(
-      "id, name, image, hero, status, bio, work, website, slug, social_x_link, created_at, public, follow_email, posts(*, votes(id)), is_following, follower_count, following_count",
+      "id, name, image, hero, status, bio, work, website, slug, social_x_link, created_at, public, follow_email, is_ambassador, posts(*, votes(id)), is_following, follower_count, following_count",
     )
     .eq("slug", slug);
 

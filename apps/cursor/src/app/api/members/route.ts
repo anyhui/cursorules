@@ -4,7 +4,8 @@ import { type NextRequest, NextResponse } from "next/server";
 const PAGE_SIZE = 90;
 const MAX_OFFSET = 10000;
 const ALLOWED_SORT = new Set(["popular"]);
-const PUBLIC_FIELDS = "id, name, image, slug, follower_count" as const;
+const PUBLIC_FIELDS =
+  "id, name, image, slug, follower_count, is_ambassador" as const;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -20,6 +21,7 @@ export async function GET(request: NextRequest) {
     : "created_at";
 
   const q = (searchParams.get("q") ?? "").trim().slice(0, 100);
+  const ambassadorsOnly = searchParams.get("ambassadors") === "1";
 
   const supabase = await createClient();
 
@@ -30,6 +32,10 @@ export async function GET(request: NextRequest) {
     .neq("name", "unknown user")
     .order(col, { ascending: false })
     .range(offset, offset + PAGE_SIZE - 1);
+
+  if (ambassadorsOnly) {
+    query = query.eq("is_ambassador", true);
+  }
 
   if (q.length > 0) {
     query = query.ilike("name", `%${q}%`);
@@ -47,6 +53,7 @@ export async function GET(request: NextRequest) {
     image: row.image,
     slug: row.slug,
     follower_count: row.follower_count,
+    is_ambassador: row.is_ambassador ?? false,
   }));
 
   return new NextResponse(JSON.stringify({ data: safeData, hasMore: safeData.length === PAGE_SIZE }), {

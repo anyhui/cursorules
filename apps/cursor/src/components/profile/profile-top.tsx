@@ -18,6 +18,7 @@ export function ProfileTop({
     public: boolean;
     slug: string;
     is_following: boolean;
+    is_ambassador?: boolean;
     following_count: number;
     followers_count: number;
   };
@@ -40,6 +41,7 @@ export function ProfileTop({
           is_public={data?.public}
           slug={data?.slug}
           is_following={data?.is_following}
+          is_ambassador={data?.is_ambassador}
           following_count={data?.following_count}
           followers_count={data?.followers_count}
         />

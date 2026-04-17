@@ -1,5 +1,6 @@
 "use client";
 
+import { AmbassadorBadge } from "@/components/ambassador-badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { formatNumber } from "@/utils/format";
@@ -15,6 +16,7 @@ export function MembersCard({
     image: string;
     name: string;
     follower_count?: number;
+    is_ambassador?: boolean;
   };
   gray?: boolean;
   noBorder?: boolean;
@@ -44,8 +46,11 @@ export function MembersCard({
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-medium tracking-[0.005em] text-foreground">
-          {member.name}
+        <div className="flex items-center gap-1.5 truncate text-sm font-medium tracking-[0.005em] text-foreground">
+          <span className="truncate">{member.name}</span>
+          {member.is_ambassador ? (
+            <AmbassadorBadge className="size-3.5" />
+          ) : null}
         </div>
         <div className="truncate text-[13px] text-muted-foreground">
           @{member.slug}
