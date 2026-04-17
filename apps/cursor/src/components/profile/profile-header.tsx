@@ -3,6 +3,7 @@
 import { formatNumber } from "@/utils/format";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
+import { AmbassadorBadge } from "../ambassador-badge";
 import { EditProfileModal } from "../modals/edit-profile-modal";
 import { FollowButton } from "./follow-button";
 
@@ -18,6 +19,7 @@ export function ProfileHeader({
   social_x_link,
   is_public,
   slug,
+  is_ambassador,
   following_count,
   followers_count,
 }: {
@@ -33,6 +35,7 @@ export function ProfileHeader({
   is_public?: boolean;
   slug: string;
   is_following: boolean;
+  is_ambassador?: boolean;
   following_count: number;
   followers_count: number;
 }) {
@@ -48,8 +51,11 @@ export function ProfileHeader({
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 md:pb-1">
         <div className="space-y-1">
-          <h2 className="text-[26px] font-medium leading-[1.05] tracking-[-0.03em] text-foreground md:text-[34px]">
-            {name}
+          <h2 className="flex items-center gap-2 text-[26px] font-medium leading-[1.05] tracking-[-0.03em] text-foreground md:text-[34px]">
+            <span>{name}</span>
+            {is_ambassador ? (
+              <AmbassadorBadge className="size-5 md:size-6" />
+            ) : null}
           </h2>
           {status ? (
             <span className="block text-sm text-muted-foreground">

@@ -25,10 +25,12 @@ type Member = {
   image: string;
   name: string;
   follower_count: number;
+  is_ambassador?: boolean;
 };
 
 const categoryTabs = [
   { key: null, label: "Developers" },
+  { key: "ambassadors", label: "Ambassadors" },
   { key: "companies", label: "Companies" },
 ] as const;
 
@@ -36,10 +38,12 @@ async function fetchMembersPage(
   offset: number,
   sort: string | null,
   q: string | null,
+  ambassadorsOnly: boolean,
 ) {
   const params = new URLSearchParams({ offset: String(offset) });
   if (sort) params.set("sort", sort);
   if (q) params.set("q", q);
+  if (ambassadorsOnly) params.set("ambassadors", "1");
   const res = await fetch(`/api/members?${params}`);
   const json = await res.json();
   return json as { data: Member[]; hasMore: boolean };
@@ -71,8 +75,12 @@ export function MembersTabs({
   sortRef.current = sort;
   searchRef.current = search;
 
+  const isAmbassadors = selectedTab === "ambassadors";
+  const ambassadorsRef = useRef(isAmbassadors);
+  ambassadorsRef.current = isAmbassadors;
+
   useEffect(() => {
-    if (initialLoadRef.current && !sort && !search) {
+    if (initialLoadRef.current && !sort && !search && !isAmbassadors) {
       initialLoadRef.current = false;
       return;
     }
@@ -86,34 +94,39 @@ export function MembersTabs({
     loadingRef.current = true;
 
     const debounce = setTimeout(() => {
-      fetchMembersPage(0, sort, search).then(({ data, hasMore }) => {
-        if (cancelled) return;
-        setMembers(data);
-        offsetRef.current = data.length;
-        setHasMoreMembers(hasMore);
-        loadingRef.current = false;
-        setLoading(false);
-      });
+      fetchMembersPage(0, sort, search, isAmbassadors).then(
+        ({ data, hasMore }) => {
+          if (cancelled) return;
+          setMembers(data);
+          offsetRef.current = data.length;
+          setHasMoreMembers(hasMore);
+          loadingRef.current = false;
+          setLoading(false);
+        },
+      );
     }, search ? 300 : 0);
 
     return () => {
       cancelled = true;
       clearTimeout(debounce);
     };
-  }, [sort, search]);
+  }, [sort, search, isAmbassadors]);
 
   const loadMoreMembers = useCallback(() => {
     if (loadingRef.current || !hasMoreMembers) return;
     loadingRef.current = true;
 
-    fetchMembersPage(offsetRef.current, sortRef.current, searchRef.current).then(
-      ({ data, hasMore }) => {
-        setMembers((prev) => [...prev, ...data]);
-        offsetRef.current += data.length;
-        setHasMoreMembers(hasMore);
-        loadingRef.current = false;
-      },
-    );
+    fetchMembersPage(
+      offsetRef.current,
+      sortRef.current,
+      searchRef.current,
+      ambassadorsRef.current,
+    ).then(({ data, hasMore }) => {
+      setMembers((prev) => [...prev, ...data]);
+      offsetRef.current += data.length;
+      setHasMoreMembers(hasMore);
+      loadingRef.current = false;
+    });
   }, [hasMoreMembers]);
 
   const filteredCompanies = useMemo(() => {
@@ -134,6 +147,18 @@ export function MembersTabs({
   const hasMore = isCompanies
     ? companyVisible < filteredCompanies.length
     : hasMoreMembers;
+
+  const searchPlaceholder = isCompanies
+    ? "Search companies..."
+    : isAmbassadors
+      ? "Search ambassadors by name..."
+      : `Search ${totalMembers.toLocaleString()} members by name...`;
+
+  const emptyLabel = isCompanies
+    ? "No companies found"
+    : isAmbassadors
+      ? "No ambassadors found"
+      : "No members found";
 
   const sentinelRef = useInfiniteScroll(
     isCompanies ? loadMoreCompanies : loadMoreMembers,
@@ -157,11 +182,7 @@ export function MembersTabs({
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
         <SearchInput
-          placeholder={
-            isCompanies
-              ? "Search companies..."
-              : `Search ${totalMembers.toLocaleString()} members by name...`
-          }
+          placeholder={searchPlaceholder}
           className="max-w-[520px]"
         />
 
@@ -236,7 +257,7 @@ export function MembersTabs({
       ) : (
         <div className="mt-24 flex flex-col items-center">
           <p className="text-center text-sm text-muted-foreground">
-            {isCompanies ? "No companies found" : "No members found"}
+            {emptyLabel}
           </p>
           <Button
             variant="outline"
