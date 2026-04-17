@@ -1,5 +1,6 @@
 "use client";
 
+import { GoogleIcon } from "@/components/icons/google-icon";
 import { createClient } from "@/utils/supabase/client";
 import { useSearchParams } from "next/navigation";
 import { Button } from "./ui/button";
@@ -23,7 +24,7 @@ export function GoogleSignin({ redirectTo }: { redirectTo?: string }) {
       }}
     >
       <span className="flex items-center gap-2">
-        {/* <GoogleIcon className="w-4 h-4" /> */}
+        <GoogleIcon className="size-4" />
         Sign in with Google
       </span>
     </Button>

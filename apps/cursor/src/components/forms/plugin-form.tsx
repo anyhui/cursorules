@@ -21,10 +21,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { GithubIcon } from "@/components/icons/github-icon";
 import {
   AlertCircle,
   Check,
-  Github,
   Loader2,
   Plus,
   Trash2,
@@ -323,7 +323,7 @@ export function PluginForm() {
                       <FormControl>
                         <div className="flex items-center gap-2">
                           <div className="relative flex-1">
-                            <Github className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <GithubIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                               placeholder="https://github.com/you/your-plugin"
                               {...field}

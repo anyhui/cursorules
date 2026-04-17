@@ -55,8 +55,20 @@ function buildCommandDeepLink(name: string, content: string) {
   return `cursor://anysphere.cursor-deeplink/command?name=${encodeURIComponent(name)}&text=${encodeURIComponent(content)}`;
 }
 
+function toBase64(input: string): string {
+  if (typeof Buffer !== "undefined") {
+    return Buffer.from(input, "utf-8").toString("base64");
+  }
+  // Browser fallback: btoa only accepts Latin-1, so round-trip through UTF-8 first.
+  return btoa(
+    encodeURIComponent(input).replace(/%([0-9A-F]{2})/g, (_, hex) =>
+      String.fromCharCode(Number.parseInt(hex, 16)),
+    ),
+  );
+}
+
 function buildMCPInstallDeepLink(name: string, config: string) {
-  return `cursor://anysphere.cursor-deeplink/mcp/install?name=${encodeURIComponent(name)}&config=${btoa(config)}`;
+  return `cursor://anysphere.cursor-deeplink/mcp/install?name=${encodeURIComponent(name)}&config=${toBase64(config)}`;
 }
 
 type ComponentType = "rule" | "mcp_server" | "skill" | "agent" | "hook" | "lsp_server" | "command";
@@ -367,9 +379,16 @@ function McpSection({
 
         let installLink = mcpLink ?? null;
         if (!installLink) {
-          const resolved = resolveMcpConfig(mcp.content, meta);
-          if (resolved) {
-            installLink = buildMCPInstallDeepLink(resolved.name, JSON.stringify(resolved.config));
+          try {
+            const resolved = resolveMcpConfig(mcp.content, meta);
+            if (resolved) {
+              installLink = buildMCPInstallDeepLink(
+                resolved.name,
+                JSON.stringify(resolved.config),
+              );
+            }
+          } catch {
+            installLink = null;
           }
         }
 

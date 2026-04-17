@@ -1,10 +1,17 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "organizeImports": {
-    "enabled": true
+  "files": {
+    "includes": ["**", "!**/.wrangler", "!**/node_modules"]
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
   },
   "linter": {
-    "ignore": [".wrangler", "node_modules"],
     "enabled": true,
     "rules": {
       "recommended": true,
@@ -20,6 +27,7 @@
     }
   },
   "formatter": {
+    "enabled": true,
     "indentStyle": "space"
   }
 }

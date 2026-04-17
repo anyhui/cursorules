@@ -98,12 +98,12 @@ export default async function Page() {
   const upcomingEvents = (eventsData ?? [])
     .filter(
       (e) =>
-        e.event.visibility === "public" && new Date(e.event.end_at) >= now,
+        e.visibility === "public" && new Date(e.end_at) >= now,
     )
     .sort(
       (a, b) =>
-        new Date(a.event.start_at).getTime() -
-        new Date(b.event.start_at).getTime(),
+        new Date(a.start_at).getTime() -
+        new Date(b.start_at).getTime(),
     )
     .slice(0, 4);
 

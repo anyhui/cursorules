@@ -2,7 +2,7 @@
 
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll";
 import type { Event } from "@/lib/luma";
-import { cn } from "@/lib/utils";
+import { cn, getCountryName } from "@/lib/utils";
 import { useQueryState } from "nuqs";
 import { useCallback, useMemo, useState } from "react";
 import { SearchInput } from "../search-input";
@@ -24,15 +24,19 @@ const tabs = [
 ] as const;
 
 function getCity(event: Event): string {
-  return event.event.geo_address_json?.city || "";
+  return event.geo_address_json?.city || "";
+}
+
+function getCountry(event: Event): string {
+  return getCountryName(event.geo_address_json?.country);
 }
 
 function matchesSearch(event: Event, term: string): boolean {
   const lower = term.toLowerCase();
-  const name = event.event.name.toLowerCase();
+  const name = event.name.toLowerCase();
   const city = getCity(event).toLowerCase();
-  const region = (event.event.geo_address_json?.region || "").toLowerCase();
-  const country = (event.event.geo_address_json?.country || "").toLowerCase();
+  const region = (event.geo_address_json?.region || "").toLowerCase();
+  const country = getCountry(event).toLowerCase();
   return (
     name.includes(lower) ||
     city.includes(lower) ||
@@ -44,7 +48,12 @@ function matchesSearch(event: Event, term: string): boolean {
 export function EventsListClient({ events }: { events: Event[] }) {
   const [selectedTab, setSelectedTab] = useQueryState("tab");
   const [search] = useQueryState("q", { defaultValue: "" });
-  const [selectedCity, setSelectedCity] = useQueryState("city", { defaultValue: "all" });
+  const [selectedCountry, setSelectedCountry] = useQueryState("country", {
+    defaultValue: "all",
+  });
+  const [selectedCity, setSelectedCity] = useQueryState("city", {
+    defaultValue: "all",
+  });
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
   const now = useMemo(() => new Date(), []);
@@ -52,11 +61,10 @@ export function EventsListClient({ events }: { events: Event[] }) {
   const upcoming = useMemo(
     () =>
       events
-        .filter((e) => new Date(e.event.end_at) >= now)
+        .filter((e) => new Date(e.end_at) >= now)
         .sort(
           (a, b) =>
-            new Date(a.event.start_at).getTime() -
-            new Date(b.event.start_at).getTime(),
+            new Date(a.start_at).getTime() - new Date(b.start_at).getTime(),
         ),
     [events, now],
   );
@@ -64,21 +72,20 @@ export function EventsListClient({ events }: { events: Event[] }) {
   const past = useMemo(
     () =>
       events
-        .filter((e) => new Date(e.event.end_at) < now)
+        .filter((e) => new Date(e.end_at) < now)
         .sort(
           (a, b) =>
-            new Date(b.event.start_at).getTime() -
-            new Date(a.event.start_at).getTime(),
+            new Date(b.start_at).getTime() - new Date(a.start_at).getTime(),
         ),
     [events, now],
   );
 
   const pool = selectedTab === "past" ? past : upcoming;
 
-  const cities = useMemo(() => {
+  const countries = useMemo(() => {
     const counts = new Map<string, number>();
     for (const e of pool) {
-      const c = getCity(e) || "Online";
+      const c = getCountry(e) || "Online";
       counts.set(c, (counts.get(c) ?? 0) + 1);
     }
     return [...counts.entries()]
@@ -86,8 +93,30 @@ export function EventsListClient({ events }: { events: Event[] }) {
       .map(([name, count]) => ({ name, count }));
   }, [pool]);
 
+  const cityPool = useMemo(() => {
+    if (selectedCountry === "all") return pool;
+    return pool.filter((e) => (getCountry(e) || "Online") === selectedCountry);
+  }, [pool, selectedCountry]);
+
+  const cities = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const e of cityPool) {
+      const c = getCity(e) || "Online";
+      counts.set(c, (counts.get(c) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, count]) => ({ name, count }));
+  }, [cityPool]);
+
   const filtered = useMemo(() => {
     let result = pool;
+
+    if (selectedCountry !== "all") {
+      result = result.filter(
+        (e) => (getCountry(e) || "Online") === selectedCountry,
+      );
+    }
 
     if (selectedCity !== "all") {
       result = result.filter((e) => (getCity(e) || "Online") === selectedCity);
@@ -98,7 +127,7 @@ export function EventsListClient({ events }: { events: Event[] }) {
     }
 
     return result;
-  }, [pool, search, selectedCity]);
+  }, [pool, search, selectedCountry, selectedCity]);
 
   const loadMore = useCallback(
     () => setVisibleCount((prev) => Math.min(prev + ITEMS_PER_PAGE, filtered.length)),
@@ -115,6 +144,27 @@ export function EventsListClient({ events }: { events: Event[] }) {
           placeholder={`Search ${pool.length} events by name or city...`}
           className="max-w-[520px]"
         />
+
+        <Select
+          value={selectedCountry}
+          onValueChange={(v) => {
+            setSelectedCountry(v);
+            setSelectedCity("all");
+            setVisibleCount(ITEMS_PER_PAGE);
+          }}
+        >
+          <SelectTrigger className="h-11 w-[180px] flex-shrink-0 rounded-full">
+            <SelectValue placeholder="All countries" />
+          </SelectTrigger>
+          <SelectContent className="max-h-[280px] overflow-y-auto">
+            <SelectItem value="all">All countries</SelectItem>
+            {countries.map((c) => (
+              <SelectItem key={c.name} value={c.name}>
+                {c.name} ({c.count})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <Select
           value={selectedCity}
@@ -158,6 +208,7 @@ export function EventsListClient({ events }: { events: Event[] }) {
             )}
             onClick={() => {
               setSelectedTab(tab.key);
+              setSelectedCountry("all");
               setSelectedCity("all");
               setVisibleCount(ITEMS_PER_PAGE);
             }}

@@ -6,7 +6,7 @@ export async function EventsList() {
   const { entries: events } = await getEvents();
 
   const publicEvents = (events ?? []).filter(
-    (e) => e.event.visibility === "public",
+    (e) => e.visibility === "public",
   );
 
   return (

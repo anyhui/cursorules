@@ -1,11 +1,11 @@
 "use client";
 
-import type { PluginCardData } from "@/components/plugins/plugin-card";
-import { PluginCard } from "@/components/plugins/plugin-card";
 import Fuse from "fuse.js";
 import Link from "next/link";
 import { useQueryState } from "nuqs";
 import { useEffect, useMemo, useState } from "react";
+import type { PluginCardData } from "@/components/plugins/plugin-card";
+import { PluginCard } from "@/components/plugins/plugin-card";
 import type { ForumPost as ForumPostType } from "@/data/queries";
 import { BoardPost } from "./board/board-post";
 import { EventCard } from "./events/event-card";
@@ -109,9 +109,9 @@ export function Startpage({
     return upcomingEvents.filter((e) =>
       matchesSearch(
         search,
-        e.event.name,
-        e.event.geo_address_json?.city,
-        e.event.geo_address_json?.country,
+        e.name,
+        e.geo_address_json?.city,
+        e.geo_address_json?.country,
       ),
     );
   }, [search, isSearching, upcomingEvents]);
@@ -269,11 +269,9 @@ export function Startpage({
                 </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filteredEvents
-                  .slice(0, isSearching ? 8 : 4)
-                  .map((event) => (
-                    <EventCard key={event.api_id} data={event} />
-                  ))}
+                {filteredEvents.slice(0, isSearching ? 8 : 4).map((event) => (
+                  <EventCard key={event.api_id} data={event} />
+                ))}
               </div>
             </div>
           )}
@@ -362,12 +360,9 @@ export function Startpage({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filteredMembers
-                  .slice(0, isSearching ? 8 : 4)
-                  .map((member) => (
-                    // @ts-ignore
-                    <MembersCard key={member.id} member={member} gray />
-                  ))}
+                {filteredMembers.slice(0, isSearching ? 8 : 4).map((member) => (
+                  <MembersCard key={member.id} member={member} gray />
+                ))}
               </div>
             </div>
           )}
@@ -376,9 +371,7 @@ export function Startpage({
             <div className="mb-14">
               <div className="mb-5 flex items-center justify-between">
                 <Link href="/board">
-                  <h3 className="section-eyebrow">
-                    Trending in Cursor
-                  </h3>
+                  <h3 className="section-eyebrow">Trending in Cursor</h3>
                 </Link>
                 <Link
                   href="/board"
@@ -413,7 +406,7 @@ export function Startpage({
               </div>
               <div className="space-y-10">
                 {filteredPosts.slice(0, 3).map((post) => (
-                  // @ts-ignore
+                  // @ts-expect-error
                   <BoardPost key={post.post_id} {...post} />
                 ))}
               </div>
@@ -459,11 +452,26 @@ export function Startpage({
               </div>
               <div className="flex flex-wrap gap-2 mb-5">
                 {[
-                  { label: "Discussions", href: "https://forum.cursor.com/c/general/4" },
-                  { label: "Guides", href: "https://forum.cursor.com/c/guides/20" },
-                  { label: "Showcase", href: "https://forum.cursor.com/c/showcase/9" },
-                  { label: "Ideas", href: "https://forum.cursor.com/c/ideas/22" },
-                  { label: "Announcements", href: "https://forum.cursor.com/c/announcements/11" },
+                  {
+                    label: "Discussions",
+                    href: "https://forum.cursor.com/c/general/4",
+                  },
+                  {
+                    label: "Guides",
+                    href: "https://forum.cursor.com/c/guides/20",
+                  },
+                  {
+                    label: "Showcase",
+                    href: "https://forum.cursor.com/c/showcase/9",
+                  },
+                  {
+                    label: "Ideas",
+                    href: "https://forum.cursor.com/c/ideas/22",
+                  },
+                  {
+                    label: "Announcements",
+                    href: "https://forum.cursor.com/c/announcements/11",
+                  },
                 ].map((cat) => (
                   <a
                     key={cat.label}
