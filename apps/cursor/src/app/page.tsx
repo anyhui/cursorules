@@ -2,7 +2,6 @@ import type { PluginCardData } from "@/components/plugins/plugin-card";
 import { Startpage } from "@/components/startpage";
 import {
   getFeaturedJobs,
-  getFeaturedPlugins,
   getForumPosts,
   getMembers,
   getPlugins,
@@ -59,7 +58,6 @@ function toPluginCard(p: NonNullable<Awaited<ReturnType<typeof getPlugins>>["dat
 export default async function Page() {
   const [
     { data: featuredJobs },
-    { data: featuredPluginsData },
     { data: totalUsers },
     { data: members },
     { data: popularPosts },
@@ -68,7 +66,6 @@ export default async function Page() {
     { data: forumPosts },
   ] = await Promise.all([
     getFeaturedJobs({ onlyPremium: true }),
-    getFeaturedPlugins({ onlyPremium: true }),
     getTotalUsers(),
     getMembers({ page: 1, limit: 12 }),
     getPopularPosts(),
@@ -76,8 +73,6 @@ export default async function Page() {
     getEvents(),
     getForumPosts(),
   ]);
-
-  const featuredPlugins = (featuredPluginsData ?? []).slice(0, 8).map(toPluginCard);
 
   const allPlugins = (allPluginsData ?? [])
     .map(toPluginCard)
@@ -112,7 +107,6 @@ export default async function Page() {
       <div className="w-full">
         <Suspense>
           <Startpage
-            featuredPlugins={featuredPlugins}
             popularPlugins={popularPlugins}
             allPlugins={allPlugins}
             recentPlugins={recentPlugins}

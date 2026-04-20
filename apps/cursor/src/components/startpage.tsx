@@ -23,7 +23,6 @@ function matchesSearch(term: string, ...fields: (string | undefined | null)[]) {
 import type { Event } from "@/lib/luma";
 
 export function Startpage({
-  featuredPlugins,
   popularPlugins,
   allPlugins,
   recentPlugins,
@@ -34,7 +33,6 @@ export function Startpage({
   popularPosts,
   forumPosts,
 }: {
-  featuredPlugins: PluginCardData[];
   popularPlugins: PluginCardData[];
   allPlugins: PluginCardData[];
   recentPlugins: PluginCardData[];
@@ -67,9 +65,9 @@ export function Startpage({
   );
 
   const filteredPlugins = useMemo(() => {
-    if (!isSearching) return featuredPlugins;
+    if (!isSearching) return [] as PluginCardData[];
     return pluginFuse.search(search).map((r) => r.item);
-  }, [search, isSearching, featuredPlugins, pluginFuse]);
+  }, [search, isSearching, pluginFuse]);
 
   const filteredJobs = useMemo(() => {
     if (!isSearching) return jobs;
@@ -133,21 +131,15 @@ export function Startpage({
             <GlobalSearchInput />
           </div>
 
-          {filteredPlugins.length > 0 && (
+          {isSearching && filteredPlugins.length > 0 && (
             <div className="mb-14">
               <div className="mb-5 flex items-center justify-between">
-                <h3 className="section-eyebrow">
-                  {isSearching ? "Plugins" : "Featured Plugins"}
-                </h3>
+                <h3 className="section-eyebrow">Plugins</h3>
                 <Link
-                  href={
-                    isSearching
-                      ? `/plugins?q=${encodeURIComponent(search)}`
-                      : "/plugins"
-                  }
+                  href={`/plugins?q=${encodeURIComponent(search)}`}
                   className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
                 >
-                  <span>{isSearching ? "See all results" : "View all"}</span>
+                  <span>See all results</span>
                   <svg
                     width="12"
                     height="13"
@@ -175,11 +167,9 @@ export function Startpage({
                 </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filteredPlugins
-                  .slice(0, isSearching ? 12 : 8)
-                  .map((plugin) => (
-                    <PluginCard key={plugin.slug} plugin={plugin} />
-                  ))}
+                {filteredPlugins.slice(0, 12).map((plugin) => (
+                  <PluginCard key={plugin.slug} plugin={plugin} />
+                ))}
               </div>
             </div>
           )}
