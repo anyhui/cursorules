@@ -418,27 +418,6 @@ export async function getPluginBySlug(slug: string) {
   return { data: data as PluginRow | null, error };
 }
 
-export async function getFeaturedPlugins({
-  onlyPremium,
-}: {
-  onlyPremium?: boolean;
-} = {}) {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("plugins")
-    .select("*, plugin_components(*)")
-    .limit(100)
-    .order("order", { ascending: false })
-    .order("install_count", { ascending: false })
-    .eq("active", true)
-    .or(onlyPremium ? "plan.eq.premium" : "plan.eq.featured,plan.eq.premium");
-
-  return {
-    data: (data as PluginRow[] | null)?.sort(() => Math.random() - 0.5) ?? null,
-    error,
-  };
-}
-
 export async function getPendingPlugins({
   since,
 }: { since?: string } = {}) {
