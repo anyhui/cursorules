@@ -53,8 +53,8 @@ Fill in the required values:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Yes | Supabase Publishable key (`sb_publishable_...`, replaces the legacy anon key) |
+| `SUPABASE_SECRET_KEY` | Yes | Supabase Secret key (`sb_secret_...`, replaces the legacy service role key) |
 | `RESEND_API_KEY` | No | Resend API key (emails) |
 | `NEXT_PUBLIC_APP_URL` | No | Defaults to `http://localhost:3000` |
 
