@@ -63,6 +63,9 @@ const nextConfig = {
         hostname: "knhgkaawjfqqwmsgmxns.supabase.co",
       },
       {
+        hostname: "service.cursor.directory",
+      },
+      {
         hostname: "console.settlemint.com",
       },
       {

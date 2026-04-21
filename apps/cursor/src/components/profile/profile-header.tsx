@@ -1,10 +1,10 @@
 "use client";
 
 import { formatNumber } from "@/utils/format";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { AmbassadorBadge } from "../ambassador-badge";
 import { EditProfileModal } from "../modals/edit-profile-modal";
+import { EditableAvatar } from "./editable-avatar";
 import { FollowButton } from "./follow-button";
 
 export function ProfileHeader({
@@ -41,13 +41,12 @@ export function ProfileHeader({
 }) {
   return (
     <div className="relative z-10 mt-4 flex flex-col gap-4 pb-2 md:mt-5 md:flex-row md:items-center md:gap-6">
-      <Avatar className="size-20 border border-border bg-card md:size-24">
-        <AvatarImage src={image} className="object-cover" />
-
-        <AvatarFallback className="bg-muted text-lg font-medium text-foreground">
-          {name?.charAt(0)}
-        </AvatarFallback>
-      </Avatar>
+      <EditableAvatar
+        userId={id}
+        name={name}
+        image={image}
+        isOwner={isOwner}
+      />
 
       <div className="flex min-w-0 flex-1 flex-col gap-2 md:pb-1">
         <div className="space-y-1">
