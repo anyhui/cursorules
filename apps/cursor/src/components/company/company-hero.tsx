@@ -3,7 +3,8 @@
 import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { type ChangeEvent, useRef } from "react";
+import { type ChangeEvent, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export function CompanyHero({
   companyId,
@@ -16,46 +17,68 @@ export function CompanyHero({
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileInput = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file?.type.startsWith("image/")) {
+    if (!file) return;
+
+    e.target.value = "";
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
       return;
     }
 
-    const MAX_FILE_SIZE = 1024 * 1024;
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     if (file.size > MAX_FILE_SIZE) {
+      toast.error("Image must be smaller than 5MB.");
       return;
     }
+
+    setIsUploading(true);
 
     try {
       const supabase = createClient();
       const fileExt = file.name.split(".").pop();
       const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const path = `${companyId}/hero/${fileName}`;
 
-      await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(`${companyId}/hero/${fileName}`, file, {
+        .upload(path, file, {
           cacheControl: "3600",
           upsert: false,
         });
 
+      if (uploadError) {
+        throw uploadError;
+      }
+
       const {
         data: { publicUrl },
-      } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(`${companyId}/hero/${fileName}`);
+      } = supabase.storage.from("avatars").getPublicUrl(path);
 
-      await supabase
+      const { error: updateError } = await supabase
         .from("companies")
-        .update({
-          hero: publicUrl,
-        })
+        .update({ hero: publicUrl })
         .eq("id", companyId);
 
+      if (updateError) {
+        throw updateError;
+      }
+
+      toast.success("Cover image updated.");
       router.refresh();
     } catch (error) {
-      console.error("Error uploading file:", error);
+      console.error("Error uploading cover image:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to upload cover image.",
+      );
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -100,9 +123,10 @@ export function CompanyHero({
       {isOwner && (
         <button
           aria-label="Change cover image"
-          className="absolute right-4 top-4 flex h-9 items-center gap-2 rounded-full border border-border bg-card/92 px-3 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground"
+          className="absolute right-4 top-4 flex h-9 items-center gap-2 rounded-full border border-border bg-card/92 px-3 text-sm text-muted-foreground backdrop-blur-sm transition-colors hover:bg-accent hover:text-foreground disabled:opacity-60"
           onClick={() => fileInputRef.current?.click()}
           type="button"
+          disabled={isUploading}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -130,7 +154,9 @@ export function CompanyHero({
               />
             </g>
           </svg>
-          <span className="hidden md:inline">Edit cover</span>
+          <span className="hidden md:inline">
+            {isUploading ? "Uploading..." : "Edit cover"}
+          </span>
         </button>
       )}
     </div>
