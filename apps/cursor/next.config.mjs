@@ -5,6 +5,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  cacheComponents: true,
   turbopack: {
     root: resolve(__dirname, "../.."),
   },
@@ -37,6 +38,14 @@ const nextConfig = {
         permanent: true,
       },
       {
+        // Legacy MCP detail URLs map to their plugin page. Excludes `new`,
+        // which is the MCP submission form route. Edit pages (`/mcp/x/edit`)
+        // are two segments deep and never match this single-segment source.
+        source: "/mcp/:slug((?!new$)[^/]+)",
+        destination: "/plugins/mcp-:slug",
+        permanent: true,
+      },
+      {
         source: "/official/:path*",
         destination: "/",
         permanent: true,
@@ -47,8 +56,31 @@ const nextConfig = {
         permanent: true,
       },
       {
+        // Legacy query-param tabs now live on dedicated prerendered routes.
+        // The named capture is consumed by the destination, so `tab` is
+        // stripped while other params (q, sort) pass through.
+        source: "/members",
+        has: [
+          {
+            type: "query",
+            key: "tab",
+            value: "(?<tab>ambassadors|companies)",
+          },
+        ],
+        destination: "/members/:tab",
+        permanent: false,
+      },
+      {
+        // Old paginated members URLs (/members/2, ...). Digits only, so the
+        // named tab routes (/members/ambassadors, /members/companies) are
+        // never shadowed.
+        source: "/members/:number(\\d+)",
+        destination: "/members",
+        permanent: true,
+      },
+      {
         source: "/companies",
-        destination: "/members?tab=companies",
+        destination: "/members/companies",
         permanent: true,
       },
       {

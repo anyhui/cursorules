@@ -1,34 +1,32 @@
 import { notFound, redirect } from "next/navigation";
-import { getPlugins } from "@/data/queries";
+import { getRuleRedirectSlugs, getRuleRedirectTarget } from "@/data/queries";
 
 type Params = Promise<{ slug: string }>;
 
 export async function generateStaticParams() {
-  const { data: plugins } = await getPlugins({ fetchAll: true });
-  if (!plugins) return [];
-
-  return plugins.flatMap((plugin) =>
-    (plugin.plugin_components ?? [])
-      .filter((c) => c.type === "rule")
-      .map((rule) => ({ slug: rule.slug })),
-  );
+  const { data } = await getRuleRedirectSlugs();
+  const unique = [...new Set((data ?? []).map((row) => row.slug))];
+  return unique.map((slug) => ({ slug }));
 }
 
+/**
+ * Legacy rule URLs (`/{rule-slug}`) redirect to the plugin that now contains
+ * the rule component. Rules predate plugins and live on as `rule`-type
+ * plugin components.
+ *
+ * Each page resolves its own slug with a small per-slug cached query.
+ * Don't share a fetch-the-whole-plugins-table cache entry here: thousands
+ * of these pages prerender concurrently, and waiting on that slow fill
+ * times out the build (`USE_CACHE_TIMEOUT`).
+ */
 export default async function Page({ params }: { params: Params }) {
   const { slug } = await params;
 
-  const { data: plugins } = await getPlugins({ fetchAll: true });
-  const parentPlugin = (plugins ?? []).find((p) =>
-    (p.plugin_components ?? []).some(
-      (c) => c.type === "rule" && c.slug === slug,
-    ),
-  );
+  const { data: pluginSlug } = await getRuleRedirectTarget(slug);
 
-  if (parentPlugin) {
-    redirect(`/plugins/${parentPlugin.slug}`);
+  if (pluginSlug) {
+    redirect(`/plugins/${pluginSlug}`);
   }
 
   notFound();
 }
-
-export const revalidate = 3600;

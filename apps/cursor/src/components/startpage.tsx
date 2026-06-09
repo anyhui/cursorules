@@ -12,13 +12,20 @@ import { HeroTitle } from "./hero-title";
 export function Startpage({
   leaderboardItems,
   totalUsers,
+  generatedAt,
 }: {
   leaderboardItems: LeaderboardItem[];
   totalUsers: number;
+  /** Cache-scope timestamp for deterministic leaderboard age math. */
+  generatedAt: number;
 }) {
   const [search] = useQueryState("q", { defaultValue: "" });
 
-  const isSearching = search.trim().length > 0;
+  // Don't enter search mode on the first character: Fuse needs two
+  // characters to match (`minMatchCharLength: 2`), so filtering at one
+  // character would always flash the "no plugins found" empty state.
+  const query = search.trim();
+  const isSearching = query.length >= 2;
 
   const fuse = useMemo(
     () =>
@@ -39,8 +46,8 @@ export function Startpage({
 
   const visibleItems = useMemo(() => {
     if (!isSearching) return leaderboardItems;
-    return fuse.search(search).map((r) => r.item);
-  }, [isSearching, fuse, search, leaderboardItems]);
+    return fuse.search(query).map((r) => r.item);
+  }, [isSearching, fuse, query, leaderboardItems]);
 
   return (
     <div className="page-shell pb-24 pt-28 md:pt-36">
@@ -54,7 +61,11 @@ export function Startpage({
 
           {visibleItems.length > 0 ? (
             <div className="mx-auto mb-14 w-full max-w-[880px]">
-              <PluginLeaderboard items={visibleItems} />
+              <PluginLeaderboard
+                items={visibleItems}
+                now={generatedAt}
+                searchQuery={isSearching ? query : ""}
+              />
             </div>
           ) : (
             <div className="mt-16 flex flex-col items-center">
